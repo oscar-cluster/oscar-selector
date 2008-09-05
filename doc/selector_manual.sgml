@@ -1,0 +1,120 @@
+<!DOCTYPE article PUBLIC " -//OASIS//DTD DocBook V3.1//EN" "http://oasis-open.org/docbook/xml/4.2/docbookx.dtd">
+
+<article class="whitepaper" id="documentation" lang="en">
+
+<artheader> <title>OSCAR Selector Manual</title>
+
+<author>
+
+<firstname>Geoffroy</firstname>
+<surname>Vallee</surname>
+
+<affiliation>
+<address><email>valleegr@ornl.gov</email></address>
+</affiliation>
+</author>
+
+</artheader>
+
+<sect1><title>Introduction</title>
+
+<para>
+  User front-end for the selection of OSCAR packages that needs to be installed.
+  For that, Selector is actually based on the notion of <emphasis>package 
+  sets</emphasis>, which is a list of OSCAR packages.
+</para>
+<para>
+  Based on the idea the user tries to a cluster that may have different
+  partitions, each <emphasis>partitions</emphasis> could be based on
+  different Linux distributions; the headnode and compute nodes may be on
+  different Linux distributions, each distribution may have different package
+  sets, so Selector must check that the final configuration is coherent (the
+  OPKGs that need to installed on a given partition have the server side
+  available for the headnode).
+</para>
+
+<para>
+  Repositories for OSCAR packages can be local or online. Selector does not
+  actually need to manage those repository, we only assume that the list of
+  repositories for a given Linux distribution are defined in the OSCAR 
+  repository configuration file (e.g., /tftpboot/distro/debian-4-x86_64.url).
+</para>
+
+</sect1>
+
+<sect1><title>Selector and OSCAR Repositories</title>
+</sect1>
+
+<sect1><title>OSCAR Package Sets</title>
+
+  <sect2><title>Introduction</title>
+    <para>
+      The notion of package set is actually not a mechanism of Selector. Package
+      sets define which OSCAR packages are supported on a given Linux
+      distribution (at least core OSCAR packages must be available). The actual
+      implementation of the package set mechanism is actually not important for
+      Selector which is using a pre-defined API for the usage of package sets.
+      This API is defined in OSCAR::PackageSet.
+    </para>
+  </sect2>
+
+  <sect2><title>Package Set Selection</title>
+    <para>
+      Before the actual selection of OSCAR packages, users need to select a
+      package set. The package sets define: the Linux distribution and the list
+      of available OSCAR packages (those two being linked). The Linux
+      distribution will also implies a set of repositories which can be local or
+      remote (for more details about the configuration of OSCAR repositories,
+      please refer to the OSCAR Repository Manager tool - ORM).
+    </para>
+    <para>
+      When the package set has been selected, the list of available OPKGs is
+      displayed. For that, depending on the nature of the associated 
+      repositories which can be local or global.
+    </para>
+  </sect2>
+
+  <sect2><title>Package Set Management</title>
+  </sect2>
+
+  <sect2><title>Selection Storage</title>
+    <para>
+      The OPKG selection defined the software configuration of a given cluster.
+      This configuration is stored into the OSCAR database via ODA. For that, a
+      specific API is available.
+    </para>
+  </sect2>
+
+</sect1>
+
+<sect1><title>Selector Implementation</title>
+  <sect2><title>Installation</title>
+    <sect3><title>From Sources</title>
+    </sect3>
+    <sect3><title>Using Binary Packages</title>
+    </sect3>
+  </sect2>
+  <sect2><title>Packaging</title>
+    <sect3><title>RPM</title>
+    </sect3>
+    <sect3><title>Debian Package</title>
+    </sect3>
+  </sect2>
+</sect1>
+
+<sect1><title>Conclusion</title>
+</sect1>
+
+<sect1><title>TODO</title>
+  <itemizedlist>
+    <listitem>
+      Specify how package sets are managed.
+    </listitem>
+    <listitem>
+      Give more details about the ODA API in order to store selection data.
+    </listitem>
+  </itemizedlist>
+</sect1>
+
+</article>
+
