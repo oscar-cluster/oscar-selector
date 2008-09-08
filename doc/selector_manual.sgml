@@ -43,6 +43,20 @@
 </sect1>
 
 <sect1><title>Selector and OSCAR Repositories</title>
+  <para>
+    Selector assumes that all OSCAR packages are available via binary packages 
+    available on OSCAR repositories. Those OSCAR repositories can be local or
+    remote.
+  </para>
+  <para>
+    Selector does not actually need to know anything about the underlying OSCAR
+    repository: when a list of OSCAR packages are selected from a package set,
+    the package set is associated to a Linux distribution and that Linux 
+    distribution is set up for the usage of a set of OSCAR repositories. In
+    other terms, Selector only needs to deal with user input, the management of
+    OSCAR repositories and the handling of binary packages is performed by the 
+    OSCAR Repository Manager (ORM) at a later time.
+  </para>
 </sect1>
 
 <sect1><title>OSCAR Package Sets</title>
@@ -75,13 +89,51 @@
   </sect2>
 
   <sect2><title>Package Set Management</title>
+    <para>
+      Package sets are currently a fairly static configuration of OSCAR
+      packages: a package set is typically a directory where files give the list 
+      of OSCAR package for a given Linux distribution. The 
+      <programlisting>
+      <![CDATA[
+http://svn.oscar.openclustergroup.org/trac/oscar/browser/trunk/share/package_sets/Default
+        ]]>
+      </programlisting>
+      directory shows the list of files defining the "Default"
+      package set for various Linux distributions.
+    </para>
+    <para>
+       Because a package set is finally only a set of OSCAR packages, users may
+       want to create new package sets, each package set being a specific
+       configuration of a cluster. For that, standard operations such as package
+       set copy, union, intersection should be available, in order to ease the
+       management of package sets.
+    </para>
   </sect2>
 
   <sect2><title>Selection Storage</title>
     <para>
       The OPKG selection defined the software configuration of a given cluster.
       This configuration is stored into the OSCAR database via ODA. For that, a
-      specific API is available.
+      specific API is available: ???.
+    </para>
+    <para>
+      This API is based on the fact that:
+      <orderedlist>
+        <listitem>
+          The cluster is composed of <emphasis>two node groups</emphasis>: the
+          headnode and compute nodes. We assume ODA already has information
+          about those two groups.
+        </listitem>
+        <listitem>
+          The selected OPKGs from a package set impacts the cluster
+          configuration in two ways: the server side of OSCAR packages must be
+          installed on the headnode, the client side on compute nodes. Even if 
+          Selector does not have to deal with package installation or
+          configuration, it means that the list of selected OPKGs has to be
+          stored for both the headnode and compute nodes as <emphasis>selected
+          OPKGs</emphasis>.
+      </listitem>
+      </orderedlist>
     </para>
   </sect2>
 
@@ -108,7 +160,8 @@
 <sect1><title>TODO</title>
   <itemizedlist>
     <listitem>
-      Specify how package sets are managed.
+      Give more details about the implementation, but we need to revisit the
+      implementation first.
     </listitem>
     <listitem>
       Give more details about the ODA API in order to store selection data.
