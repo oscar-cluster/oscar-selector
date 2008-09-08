@@ -20,6 +20,9 @@
 
 <para>
   User front-end for the selection of OSCAR packages that needs to be installed.
+  It means that Selector is only in charge of providing a user interface for
+  such selection and storing the selection data via ODA. It does 
+  <emphasis>not</emphasis> actually track package installation status.
   For that, Selector is actually based on the notion of <emphasis>package 
   sets</emphasis>, which is a list of OSCAR packages.
 </para>
@@ -59,7 +62,7 @@
   </para>
 </sect1>
 
-<sect1><title>OSCAR Package Sets</title>
+<sect1><title>Package Sets and OSCAR Packages</title>
 
   <sect2><title>Introduction</title>
     <para>
@@ -72,7 +75,7 @@
     </para>
   </sect2>
 
-  <sect2><title>Package Set Selection</title>
+  <sect2><title>Package Set and OSCAR Packages Selection</title>
     <para>
       Before the actual selection of OSCAR packages, users need to select a
       package set. The package sets define: the Linux distribution and the list
@@ -131,8 +134,10 @@ http://svn.oscar.openclustergroup.org/trac/oscar/browser/trunk/share/package_set
           Selector does not have to deal with package installation or
           configuration, it means that the list of selected OPKGs has to be
           stored for both the headnode and compute nodes as <emphasis>selected
-          OPKGs</emphasis>.
-      </listitem>
+          OPKGs</emphasis>. It is <emphasis>not</emphasis> possible for a user
+          to select the server-side only or the client-side only of an OSCAR
+          package.
+        </listitem>
       </orderedlist>
     </para>
   </sect2>
