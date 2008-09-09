@@ -8,6 +8,8 @@ html: $(DOCBASE).sgml
 
 all: pdf html
 
+install:
+
 clean:
 	rm -f $(DOCBASE).pdf $(DOCBASE).html 
 	rm -f *~
