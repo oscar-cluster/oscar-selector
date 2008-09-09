@@ -10,3 +10,4 @@ all: pdf html
 
 clean:
 	rm -f $(DOCBASE).pdf $(DOCBASE).html 
+	rm -f *~

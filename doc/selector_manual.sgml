@@ -147,6 +147,14 @@ http://svn.oscar.openclustergroup.org/trac/oscar/browser/trunk/share/package_set
 <sect1><title>Selector Implementation</title>
   <sect2><title>Installation</title>
     <sect3><title>From Sources</title>
+      The installation from sources can be following command (with root 
+      privileges):
+<programlisting>
+      <![CDATA[
+make install
+        ]]>
+</programlisting>
+      This command install Selector directly on your system.
     </sect3>
     <sect3><title>Using Binary Packages</title>
     </sect3>
@@ -155,6 +163,21 @@ http://svn.oscar.openclustergroup.org/trac/oscar/browser/trunk/share/package_set
     <sect3><title>RPM</title>
     </sect3>
     <sect3><title>Debian Package</title>
+    </sect3>
+    <sect3><title>Creation of a Tarball</title>
+      <para>
+        Selector can be provided via a tarball that can be used to compile
+        Selector from sources, without interaction with SVN. To create such a
+        tarball from the SVN check-out, execute the following command for the
+        top-level directory of the Selector source code:
+<programlisting>
+      <![CDATA[
+make dist
+        ]]>
+</programlisting>
+        This command creates a tarball in the top-level directory of the
+        Selector source code.
+      </para>
     </sect3>
   </sect2>
 </sect1>
