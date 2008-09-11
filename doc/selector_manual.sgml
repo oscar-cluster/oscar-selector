@@ -19,21 +19,25 @@
 <sect1><title>Introduction</title>
 
 <para>
-  User front-end for the selection of OSCAR packages that needs to be installed.
+  User front-end for the selection of OSCAR packages that need to be installed.
   It means that Selector is only in charge of providing a user interface for
-  such selection and storing the selection data via ODA. It does 
+  such selection and storing the selection data via ODA. Note, Selector does 
   <emphasis>not</emphasis> actually track package installation status.
-  For that, Selector is actually based on the notion of <emphasis>package 
-  sets</emphasis>, which is a list of OSCAR packages.
+  Selector is based on the notion of <emphasis>package sets</emphasis>, 
+  which are lists of OSCAR packages (OPKGs).  Note, the merging of package sets
+  forms a new package set containing the union of OPKGs in the
+  originating package sets.
 </para>
+
 <para>
-  Based on the idea the user tries to a cluster that may have different
-  partitions, each <emphasis>partitions</emphasis> could be based on
-  different Linux distributions; the headnode and compute nodes may be on
-  different Linux distributions, each distribution may have different package
-  sets, so Selector must check that the final configuration is coherent (the
-  OPKGs that need to installed on a given partition have the server side
-  available for the headnode).
+  <!-- TJN: clarify first line "tries to a cluster" -->
+  Based on this idea the user tries to a cluster that may have different
+  partitions, each <emphasis>partition</emphasis> could be based on
+  different Linux distributions; the headnode and compute nodes may be based
+  on different Linux distributions -- each distribution may have different 
+  package sets -- so Selector must check that the final configuration is 
+  coherent (e.g., the OPKGs that need to be installed on a given partition have 
+  the server side available for the headnode).
 </para>
 
 <para>
@@ -80,13 +84,16 @@
       Before the actual selection of OSCAR packages, users need to select a
       package set. The package sets define: the Linux distribution and the list
       of available OSCAR packages (those two being linked). The Linux
-      distribution will also implies a set of repositories which can be local or
+      distribution will also imply a set of repositories that can be local or
       remote (for more details about the configuration of OSCAR repositories,
       please refer to the OSCAR Repository Manager tool - ORM).
     </para>
     <para>
       When the package set has been selected, the list of available OPKGs is
-      displayed. For that, depending on the nature of the associated 
+      displayed. 
+	  <!-- TJN: Not sure if maybe something was left off 
+	            from following sentence? -->
+	  For that, depending on the nature of the associated 
       repositories which can be local or global.
     </para>
   </sect2>
@@ -105,8 +112,8 @@ http://svn.oscar.openclustergroup.org/trac/oscar/browser/trunk/share/package_set
       package set for various Linux distributions.
     </para>
     <para>
-       Because a package set is finally only a set of OSCAR packages, users may
-       want to create new package sets, each package set being a specific
+       Because a package set is ultimately only a set of OSCAR packages, users 
+	   may want to create new package sets, each package set being a specific
        configuration of a cluster. For that, standard operations such as package
        set copy, union, intersection should be available, in order to ease the
        management of package sets.
@@ -147,14 +154,14 @@ http://svn.oscar.openclustergroup.org/trac/oscar/browser/trunk/share/package_set
 <sect1><title>Selector Implementation</title>
   <sect2><title>Installation</title>
     <sect3><title>From Sources</title>
-      The installation from sources can be following command (with root 
-      privileges):
+      The installation from sources can be done using the following command 
+	  (with root privileges):
 <programlisting>
       <![CDATA[
 make install
         ]]>
 </programlisting>
-      This command install Selector directly on your system.
+      This command installs Selector directly on your system.
     </sect3>
     <sect3><title>Using Binary Packages</title>
     </sect3>
@@ -168,7 +175,7 @@ make install
       <para>
         Selector can be provided via a tarball that can be used to compile
         Selector from sources, without interaction with SVN. To create such a
-        tarball from the SVN check-out, execute the following command for the
+        tarball from the SVN check-out, execute the following command from the
         top-level directory of the Selector source code:
 <programlisting>
       <![CDATA[
