@@ -30,13 +30,12 @@
 </para>
 
 <para>
-  <!-- TJN: clarify first line "tries to a cluster" -->
-  Based on this idea the user tries to a cluster that may have different
+  Based on this idea the user tries to setup a cluster that may have different
   partitions, each <emphasis>partition</emphasis> could be based on
   different Linux distributions; the headnode and compute nodes may be based
-  on different Linux distributions -- each distribution may have different 
-  package sets -- so Selector must check that the final configuration is 
-  coherent (e.g., the OPKGs that need to be installed on a given partition have 
+  on different Linux distributions -- each distribution may have different
+  package sets -- so Selector must check that the final configuration is
+  coherent (e.g., the OPKGs that need to be installed on a given partition have
   the server side available for the headnode).
 </para>
 
@@ -90,11 +89,13 @@
     </para>
     <para>
       When the package set has been selected, the list of available OPKGs is
-      displayed. 
-	  <!-- TJN: Not sure if maybe something was left off 
-	            from following sentence? -->
-	  For that, depending on the nature of the associated 
-      repositories which can be local or global.
+      displayed.
+      For that, depending on the nature of the associated repositories which can
+      be local or global, ORM may query remote repositories to get information
+      about available packages. The remote query may create a latency, which is
+      normal. Also note that since all OSCAR packages are now handled via the
+      OSCAR Package Compiler (OPKGC), the tools to query local and remote
+      repositories are actually the sames and abstracted from Selector by ORM.
     </para>
   </sect2>
 
@@ -124,7 +125,9 @@ http://svn.oscar.openclustergroup.org/trac/oscar/browser/trunk/share/package_set
     <para>
       The OPKG selection defined the software configuration of a given cluster.
       This configuration is stored into the OSCAR database via ODA. For that, a
-      specific API is available: ???.
+      specific API is available: ??? (the table 
+      <emphasis>Group_Packages</emphasis>.is typically used for the storage of
+      Selector data).
     </para>
     <para>
       This API is based on the fact that:
@@ -164,12 +167,64 @@ make install
       This command installs Selector directly on your system.
     </sect3>
     <sect3><title>Using Binary Packages</title>
+      <para>
+        Selector is available via binary packages though the online OSCAR
+        repositories. For more details about those repositories, please refer to
+        the following documentation:
+        <programlisting>
+          <![CDATA[
+http://svn.oscar.openclustergroup.org/trac/oscar/wiki/OSCARRepositories
+]]>
+        </programlisting>
+      </para>
+      <para>
+        From the OSCAR repositories, get the binary package specific to your
+        Linux distribution and your hardware architecture, and install it (also
+        note that OSCAR repositories are yum or apt repositories therefore those
+        tools can be used for the installation of Selector.
+      </para>
+    </sect3>
+    <sect3><title>Installation During OSCAR Bootstrapping</title>
+      <para>
+        The OSCAR bootstrapping installs all the prereqs required by OSCAR.
+        Those prereqs include Selector. In other terms, OSCAR will automatically
+        install Selector during the bootstrapping phase.
+      </para>
+      <para>
+        For more details about the OSCAR bootstrapping mechanisms, if OSCAR is
+        installed on your system, please refer to
+        <programlisting>
+          <![CDATA[
+perldoc OSCAR::Bootstrap
+]]>
+        </programlisting>
+      </para>
     </sect3>
   </sect2>
   <sect2><title>Packaging</title>
+    <para>
+      Selector includes everything needed for the creation of RPM and Deb
+      packages.
+    </para>
     <sect3><title>RPM</title>
+      <para>
+        For the creation of a RPM, execute the following command as root:
+        <programlisting>
+          <![CDATA[
+make rpm
+]]>
+        </programlisting>
+      </para>
     </sect3>
     <sect3><title>Debian Package</title>
+      <para>
+        For the creation of a Debian package, execute the following command:
+        <programlisting>
+          <![CDATA[
+make deb
+                   ]]>
+        </programlisting>
+      </para>
     </sect3>
     <sect3><title>Creation of a Tarball</title>
       <para>
@@ -189,8 +244,10 @@ make dist
   </sect2>
 </sect1>
 
+<!--
 <sect1><title>Conclusion</title>
 </sect1>
+-->
 
 <sect1><title>TODO</title>
   <itemizedlist>
