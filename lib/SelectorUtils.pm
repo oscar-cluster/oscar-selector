@@ -393,83 +393,34 @@ sub createDefaultPackageSet # -> ($success)
   return $success;
 }
 
-sub populatePackageSetList
-{
-#########################################################################
-#  Subroutine: populatePackageSetList                                   #
-#  Parameters: A widget to add items to.                                #
-#  Returns   : Nothing                                                  #
-#  This subroutine takes in a widget which has both the "insertItem"    #
-#  and "clear" methods and adds package set names in alphabetical       #
-#  order.  This is used by the packageSetComboBox and the               #
-#  packageSetsListBox.                                                  #
-#########################################################################
+################################################################################
+#  Subroutine: populatePackageSetList                                          #
+#  Parameters: A widget to add items to.                                       #
+#  Returns   : Nothing                                                         #
+#  This subroutine takes in a widget which has both the "insertItem" and       #
+#  "clear" methods and adds package set names.                                 #
+#  This is used by the packageSetComboBox and the                              #
+#  packageSetsListBox.                                                         #
+################################################################################
+sub populatePackageSetList ($) {
+    my $widget = shift;
 
-  my $widget = shift;
+    return if (!$widget);
 
-  return if (!$widget);
+    $widget->clear();
+    my @packageSets = OSCAR::PackageSet::get_package_sets();
+    # We also include an empty entry, it speeds the widget startup and we do not
+    # assume anything about the package set users want by default.
+    unshift (@packageSets, ""); 
 
-  $widget->clear();
-  my @packageSets;           # List of package sets in oda
-#  my $createDefault = 0;     # Should we create a "Default" package set?
-
-  my @groups_list = ();  
-  my $success = OSCAR::Database::get_groups_for_packages(
-        \@groups_list,\%options,\@errors,undef);
-
-  # We also scan package sets defined in share/package_sets
-  my @local_package_sets = get_local_package_set_list ();
-  @packageSets = (@packageSets, @local_package_sets);
-
-  # !!!WARNING!!! Currently we treat package sets in share/package_sets and those 
-  # defined in the database in different ways. That may create duplicate entries
-  foreach my $groups_ref (@groups_list){
-    push @packageSets, $$groups_ref{group_name};
-  }  
-  if ($success)
-    {
-      if ((scalar @packageSets) > 0) # Make sure there's at least 1 package set
-        {
-          foreach my $pkg (sort { lc($a) cmp lc($b) } @packageSets)
-            { # Insert Package Set names in alphabetical order - ignore case
-              $widget->insertItem($pkg,-1);
-            }
-
-          # For the packageSetComboBox, set the "selected" package set
-          if ($widget->className() eq "QComboBox")
-            {
-              my $selected_group = OSCAR::Database::get_selected_group(\%options, \@errors);
-              $widget->setCurrentText($selected_group) if (scalar @packageSets > 0);
-            }
-        }
+    foreach my $pkg (sort { lc($a) cmp lc($b) } @packageSets) {
+        # Insert Package Set names in alphabetical order - ignore case
+        $widget->insertItem($pkg,-1);
     }
-  emit SelectorManageSets::refreshPackageSets();
+
+    emit SelectorManageSets::refreshPackageSets();
 }
 
-sub compactSpaces
-{
-#########################################################################
-#  Subroutine: compactSpaces                                            #
-#  Parameters: (1) The string from which to remove spaces               #
-#              (2) If $compact==1, then compress multi spaces to 1      #
-#              (3) If $commas==1, then change commas to spaces          #
-#  Returns   : The new string with spaces removed/compressed.           #
-#  This subroutine strips off the leading and trailing spaces from a    #
-#  string.  You can also pass a second parameter flag (=1) to compact   #
-#  multiple intervening spaces down to one space.  You can also pass a  #
-#  third parameter flag (=1) to change commas to spaces prior to doing  #
-#  the space removal/compression.                                       #
-#########################################################################
-
-  my($string,$compact,$commas) = @_;
-
-  $string =~ s/,/ /g if ($commas);    # Change commas to spaces
-  $string =~ s/^ *//;                 # Strip off leading spaces
-  $string =~ s/ *$//;                 # Strip off trailing spaces
-  $string =~ s/ +/ /g if ($compact);  # Compact multiple spaces
-
-  $string;  # Return string to calling procedure;
-}
 
 sub getTableItemColorGroup
 {

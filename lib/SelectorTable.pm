@@ -247,8 +247,6 @@ sub getPackagesInstalled
   return $packagesInstalled;
 }
 
-sub populateTable
-{
 #########################################################################
 #  Subroutine: populateTable                                            #
 #  Parameter : Name of the selected package set                         #
@@ -262,146 +260,139 @@ sub populateTable
 #  "activated" signal so that when a new package set is chosen, the     #
 #  checkbox info is updated appropriately.                              #
 #########################################################################
+sub populateTable ($) {
+    $currSet = shift;    # The package set selected in the ComboBox
+    my $success;         # Return result for database commands
 
-  $currSet = shift;    # The package set selected in the ComboBox
-  my $success;         # Return result for database commands
+    return if ($currSet eq "");
 
-  # Check to see if we have already built the table or not.
-  if (!$tablePopulated)
-    {
-      $tablePopulated = 1;  # So we add stuff to the cells only once
+    # Check to see if we have already built the table or not.
+    if (!$tablePopulated) {
+        $tablePopulated = 1;  # So we add stuff to the cells only once
 
-      # Get the list of all available packages
-      my $allPackages = SelectorUtils::getAllPackages();
+        # Get the list of all available packages
+        my $allPackages = SelectorUtils::getAllPackages();
 
-      my $rownum = 0;
+        my $rownum = 0;
 
-      my %should_not_install = ();
-      my @results = ();
-      get_node_package_status_with_node(
-        "oscar_server",\@results, \%options,\@errors,2 );
-      foreach my $result_ref (@results){
+        my %should_not_install = ();
+        my @results = ();
+        get_node_package_status_with_node(
+            "oscar_server",\@results, \%options,\@errors,2 );
+        foreach my $result_ref (@results) {
             my $pack = $$result_ref{package};
             $should_not_install{$pack} = 1;
-      }      
-
-
-      foreach my $pack (sort keys %{ $allPackages })
-        {
-          my $pkg = $$allPackages{$pack}->{package};
-          # Don't even bother to display non-installable packages
-          # next if ($allPackages->{$pack}{installable} != 1);
-          #next if ( $should_not_install{$pack} );
-          setNumRows($rownum+1); 
-
-          # Column 0 contains "short" names of packages
-          my $item = SelectorTableItem(this,Qt::TableItem::Never(),$pkg);
-          setItem($rownum,0,$item);
-
-          # Column 1 contains checkboxes
-          my $checkbox =
-            SelectorCheckTableItem(this,"");
-          setItem($rownum,1,$checkbox);
-
-          # Column 2 contains the long names of packages
-          $item = SelectorTableItem(this,Qt::TableItem::Never(),
-                                    $allPackages->{$pack}{package});
-          setItem($rownum,2,$item);
-
-          # Column 3 contains the "class" of packages
-          my $opkg_class;
-          if ($allPackages->{$pack}{group}){
-              $opkg_class = $allPackages->{$pack}{group};
-              if ($allPackages->{$pack}{class}) {
-                  $opkg_class .= ":" . $allPackages->{$pack}{class};
-              }
-          }elsif($allPackages->{$pack}{class}){
-              $opkg_class = $allPackages->{$pack}{class};
-          }
-          $item = SelectorTableItem(this,Qt::TableItem::Never(), $opkg_class);
-          setItem($rownum,3,$item);
-
-          # Column 4 contains the Location + Version
-          $item = SelectorTableItem(this,Qt::TableItem::Never(),
-                                    $allPackages->{$pack}{location} . " " .
-                                    $allPackages->{$pack}{version});
-          setItem($rownum,4,$item);
-
-          $rownum++;
         }
 
-      # Finally, sort the table by Package Name and then by Class and
-      # set its size automatically
-      sortColumn(2,1,1);
-      sortColumn(3,1,1);
-      adjustColumn(1);
-      adjustColumn(2);
+        foreach my $pack (sort keys %{ $allPackages }) {
+            my $pkg = $$allPackages{$pack}->{package};
+            # Don't even bother to display non-installable packages
+            # next if ($allPackages->{$pack}{installable} != 1);
+            #next if ( $should_not_install{$pack} );
+            setNumRows($rownum+1); 
+
+            # Column 0 contains "short" names of packages
+            my $item = SelectorTableItem(this,Qt::TableItem::Never(),$pkg);
+            setItem($rownum,0,$item);
+
+            # Column 1 contains checkboxes
+            my $checkbox = SelectorCheckTableItem(this,"");
+            setItem($rownum,1,$checkbox);
+
+            # Column 2 contains the long names of packages
+            $item = SelectorTableItem(this,Qt::TableItem::Never(),
+                                      $allPackages->{$pack}{package});
+            setItem($rownum,2,$item);
+
+            # Column 3 contains the "class" of packages
+            my $opkg_class;
+            if ($allPackages->{$pack}{group}) {
+                $opkg_class = $allPackages->{$pack}{group};
+                if ($allPackages->{$pack}{class}) {
+                    $opkg_class .= ":" . $allPackages->{$pack}{class};
+                }
+            } elsif ($allPackages->{$pack}{class}) {
+                $opkg_class = $allPackages->{$pack}{class};
+            }
+            $item = SelectorTableItem(this,Qt::TableItem::Never(), $opkg_class);
+            setItem($rownum,3,$item);
+
+            # Column 4 contains the Location + Version
+            $item = SelectorTableItem(this,Qt::TableItem::Never(),
+                                      $allPackages->{$pack}{location} . " " .
+                                      $allPackages->{$pack}{version});
+            setItem($rownum,4,$item);
+
+            $rownum++;
+        }
+
+        # Finally, sort the table by Package Name and then by Class and
+        # set its size automatically
+        sortColumn(2,1,1);
+        sortColumn(3,1,1);
+        adjustColumn(1);
+        adjustColumn(2);
     }
 
-  if (parent()->parent()->installuninstall > 0)
-    { # Running as the 'Updater'.  Check boxes according to 'installed' bit.
-      # Get list of packages that have their 'installed' bit set.
-      my $packagesInstalled = getPackagesInstalled();
-      # Get the lists of packages marked to be installed/uninstalled
-      my @packagesToBeInstalled;    # Array
-      my $packagesToBeInstalled;    # Hash ref of transformed array
-      my @packagesToBeUninstalled;  # Array
-      my $packagesToBeUninstalled;  # Hash ref of transformed array
-      $success = OSCAR::Database::get_node_package_status_with_node(
-          "oscar_server",\@packagesToBeInstalled,\%options,\@errors, 2 );
-      $success = OSCAR::Database::get_node_package_status_with_node(
-          "oscar_server",\@packagesToBeUninstalled,\%options,\@errors, 1 );
-      # Transform these lists into hashes
-      foreach my $pack_ref (@packagesToBeInstalled)
-        {
-          my $pack = $$pack_ref{package};
-          $packagesToBeInstalled->{$pack} = 1;
+    if (parent()->parent()->installuninstall > 0) {
+        # Running as the 'Updater'.  Check boxes according to 'installed' bit.
+        # Get list of packages that have their 'installed' bit set.
+        my $packagesInstalled = getPackagesInstalled();
+        # Get the lists of packages marked to be installed/uninstalled
+        my @packagesToBeInstalled;    # Array
+        my $packagesToBeInstalled;    # Hash ref of transformed array
+        my @packagesToBeUninstalled;  # Array
+        my $packagesToBeUninstalled;  # Hash ref of transformed array
+        $success = OSCAR::Database::get_node_package_status_with_node(
+            "oscar_server",\@packagesToBeInstalled,\%options,\@errors, 2 );
+        $success = OSCAR::Database::get_node_package_status_with_node(
+            "oscar_server",\@packagesToBeUninstalled,\%options,\@errors, 1 );
+        # Transform these lists into hashes
+        foreach my $pack_ref (@packagesToBeInstalled) {
+            my $pack = $$pack_ref{package};
+            $packagesToBeInstalled->{$pack} = 1;
         }
-      foreach my $pack_ref (@packagesToBeUninstalled)
-        {
-          my $pack = $$pack_ref{package};
-          $packagesToBeUninstalled->{$pack} = 1;
+        foreach my $pack_ref (@packagesToBeUninstalled) {
+            my $pack = $$pack_ref{package};
+            $packagesToBeUninstalled->{$pack} = 1;
         }
 
-      # Go through table and check the boxes ON if 
-      #   (a) the package is supposed to be installed OR 
-      #   (b) the package is currently installed and not supposed to be
-      #       uninstalled.
-      for (my $rownum = 0; $rownum < numRows(); $rownum++)
-        {
-          my $packname = text($rownum,0);
-
-          item($rownum,1)->setChecked(1) if
-            (((defined $packagesToBeInstalled->{$packname}) &&
-              ($packagesToBeInstalled->{$packname} == 1))
-            ||
-             ((defined $packagesInstalled->{$packname}) &&
-              ($packagesInstalled->{$packname} == 1) &&
-              (!$packagesToBeUninstalled->{$packname})));
+        # Go through table and check the boxes ON if 
+        #   (a) the package is supposed to be installed OR 
+        #   (b) the package is currently installed and not supposed to be
+        #       uninstalled.
+        for (my $rownum = 0; $rownum < numRows(); $rownum++) {
+            my $packname = text($rownum,0);
+            if (((defined $packagesToBeInstalled->{$packname})
+                && ($packagesToBeInstalled->{$packname} == 1))
+                ||
+                ((defined $packagesInstalled->{$packname})
+                && ($packagesInstalled->{$packname} == 1)
+                && (!$packagesToBeUninstalled->{$packname}))) {
+                item($rownum,1)->setChecked(1) ;
+            }
         }
-    }
-  else
-    { # Running as the 'Selector'.  Check boxes according to package set.
-      # Set the newly selected package set as the "selected" one in oda
-      $success = OSCAR::Database::set_groups_selected(
-        $currSet,\%options, \@errors);
-      if (!$success)
-        {
-          Carp::carp("Could not do oda command " .
-                     "'set_groups_selected $currSet'");
-          return;
+    } else { 
+        # Running as the 'Selector'.  Check boxes according to package set.
+        # Set the newly selected package set as the "selected" one in oda
+        $success = OSCAR::Database::set_groups_selected($currSet, \%options,
+                                                        \@errors);
+        if (!$success) {
+            Carp::carp("Could not do oda command " .
+                       "'set_groups_selected $currSet'");
+            return;
         }
 
-      # Get the list of packages in the currently selected package set 
-      # and make those packages "checked".
-      my $packagesInSet = getPackagesInPackageSet($currSet);
+        # Get the list of packages in the currently selected package set 
+        # and make those packages "checked".
+        my $packagesInSet = getPackagesInPackageSet($currSet);
 
-      # Now, go through all of the rows and set the checked status as required
-      for (my $rownum = 0; $rownum < numRows(); $rownum++)
-        {
-          item($rownum,1)->setChecked(
-            ((defined $packagesInSet->{text($rownum,0)}) &&
-             ($packagesInSet->{text($rownum,0)} == 1)));
+        # Now, go through all of the rows and set the checked status as required
+        for (my $rownum = 0; $rownum < numRows(); $rownum++) {
+            item($rownum,1)->setChecked(
+                ((defined $packagesInSet->{text($rownum,0)})
+                &&
+                ($packagesInSet->{text($rownum,0)} == 1)));
         }
     }
 }

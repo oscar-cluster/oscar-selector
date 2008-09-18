@@ -12,8 +12,8 @@ all:
 	for dir in ${SUBDIRS} ; do ( cd $$dir ; ${MAKE} all ) ; done
 
 install:
-	@install -d -m 0755 $(DESTDIR)$(LIBDIR)/Qt
-	@install    -m 0755 $(FILES) $(DESTDIR)$(LIBDIR)/Qt
+	install -d -m 0755 $(DESTDIR)$(LIBDIR)/Qt
+	install    -m 0755 $(FILES) $(DESTDIR)$(LIBDIR)/Qt
 	for dir in ${SUBDIRS} ; do ( cd $$dir ; ${MAKE} install ) ; done
 
 uninstall:

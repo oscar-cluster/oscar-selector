@@ -266,7 +266,8 @@ sub renameButton_clicked
           $error = 0;
           $response = Qt::InputDialog::getText("Rename Package Set",
                         $outputstr, Qt::LineEdit::Normal(), "", $ok, this);
-          $response = SelectorUtils::compactSpaces($response);
+          require OSCAR::Utils;
+          $response = OSCAR::Utils::compactSpaces($response, 1, 0);
           $response =~ s/ /_/g; # Change spaces to underscores
 
           if (($ok) && (length($response) > 0))
@@ -280,7 +281,7 @@ sub renameButton_clicked
                   $foundit = 1 if 
                     (lc(packageSetsListBox->text($count)) eq lc($response));
                 }
-              
+
               if ($foundit)
                 {
                   $error = 1;
