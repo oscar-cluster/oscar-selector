@@ -88,6 +88,13 @@
       please refer to the OSCAR Repository Manager tool - ORM).
     </para>
     <para>
+      <emphasis>
+        NOTE THAT WE CURRENTLY ASSUME THAT ONLY ONE LINUX DISTRIBUTION IS
+        SUPPORTED AT A TIME. THIS LINUX DISTRIBUTION IS DEFINED BY THE ONE
+        INSTALLED ON THE HEADNODE.
+      </emphasis>
+    </para>
+    <para>
       When the package set has been selected, the list of available OPKGs is
       displayed.
       For that, depending on the nature of the associated repositories which can
@@ -125,7 +132,9 @@ http://svn.oscar.openclustergroup.org/trac/oscar/browser/trunk/share/package_set
     <para>
       The OPKG selection defined the software configuration of a given cluster.
       This configuration is stored into the OSCAR database via ODA. For that, a
-      specific API is available: ??? (the table 
+      specific API is available: set_opkgs_selection_data (please see the
+      perldoc documentation associated to the OSCAR::Database module for more
+      details).
       <emphasis>Group_Packages</emphasis>.is typically used for the storage of
       Selector data).
     </para>
@@ -149,6 +158,14 @@ http://svn.oscar.openclustergroup.org/trac/oscar/browser/trunk/share/package_set
           package.
         </listitem>
       </orderedlist>
+    </para>
+  </sect2>
+
+  <sect2><title>Get Selection Data From the OSCAR Database</title>
+    <para>
+      ODA provides a specific API is available: get_opkgs_selection_data (please
+      see the perldoc documentation associated to the OSCAR::Database module for 
+      more details).
     </para>
   </sect2>
 
@@ -242,6 +259,38 @@ make dist
       </para>
     </sect3>
   </sect2>
+  <sect2><title>Implementation of the Package Set Selection</title>
+    <para>
+      We currently assume the following constraints:
+      <itemizedlist>
+        <listitem>
+          Only one Linux distribution can be deployed accross the compute nodes
+          and the headnode. This Linux distribution is actually defined by the
+          Linux distribution installed on the headnode.
+        </listitem>
+        <listitem>
+          The package set selected by the user is agnostic of the Linux 
+          distribution. In other terms, the user selects a package set (
+          "Default" for instance) and based on the local Linux distribution of
+          the headnode, the list of OPKGs is retrieved combining the Linux
+          distribution identifier and the package set's name.
+        </listitem>
+        <listitem>
+          The exact same selection of OPKGs, from the exact same package set,
+          has to be installed on both the compute nodes and the headnode. This
+          avoid to have the client- and server-side only of a service running
+          on the cluster, leading to performance degradation and unexpected
+          behaviors. OSCAR has to guarantee the correct configuration of both
+          the server-side and the client-side of all services provided via
+          OPKGs.
+        </listitem>
+      </itemizedlist>
+      Based on those constraints, Selector does not currently need to expose
+      the Linux distribution to the user, this information is implicit; the
+      user only needs to select a package set identifier ("Default" for 
+      instance).
+    </para>
+  </sect2>
 </sect1>
 
 <!--
@@ -256,7 +305,14 @@ make dist
       implementation first.
     </listitem>
     <listitem>
-      Give more details about the ODA API in order to store selection data.
+      The support of different Linux distributions for different cluster 
+      partitions has to be specified.
+    </listitem>
+    <listitem>
+      The Command Line Interface (CLI) is not yet included into the Selector
+      module; the code is still directly in the OSCAR code. This code should be
+      moved in the Selector module. For that, we may need to revisit the
+      implementation of the graphical part and the backend.
     </listitem>
   </itemizedlist>
 </sect1>
