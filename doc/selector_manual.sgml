@@ -291,6 +291,25 @@ make dist
       instance).
     </para>
   </sect2>
+  <sect2><title>Testing</title>
+    <para>
+      Since only the graphical user interface (GUI) is fully integrated into the
+      Selector component, we will only detail here the testing of the Selector
+      GUI.
+    </para>
+    <para>
+      Selector is a stand alone OSCAR component that only need OSCAR core
+      libraries, ORM, and ODA (the database must be initialized). Therefore, in
+      order to test Selector, simply install Selector on your system, go into
+      the directory where Selector Perl modules are installed and run as root
+      the following command:
+<programlisting>
+      <![CDATA[
+perl ./Selector.pl
+              ]]>
+</programlisting>
+    </para>
+  </sect2>
 </sect1>
 
 <!--
