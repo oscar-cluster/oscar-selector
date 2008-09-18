@@ -95,8 +95,6 @@ sub addTypeNameFieldToPackage
     }
 }
 
-sub getAllPackages # -> $allPackages
-{
 #########################################################################
 #  Subroutine: getAllPackages                                           #
 #  Parameters: None                                                     #
@@ -125,6 +123,7 @@ sub getAllPackages # -> $allPackages
 #     Packager Name  {packager_name}   Name(s) of packager              #
 #     Packager Email {packager_email}  Email address(es) of packager(s) #
 #########################################################################
+sub getAllPackages () {
 
   # If this function has been called once, then it should have already
   # found all available packages and stored it in the $allPackages cache.

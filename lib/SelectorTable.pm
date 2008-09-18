@@ -47,10 +47,9 @@ use lib "$ENV{OSCAR_HOME}/lib";
 use OSCAR::Database;
 use OSCAR::Package;
 use OSCAR::OpkgDB;
-use OSCAR::PackageSet qw (get_list_opkgs_in_package_set);
-use OSCAR::Utils qw (
-                    print_array
-                    );
+use OSCAR::PackageSet;
+use OSCAR::OCA::OS_Detect;
+use OSCAR::Utils;
 use Carp;
 my %options = ();
 my @errors = ();
@@ -173,6 +172,7 @@ sub sortColumn
     }
 }
 
+# DEPRECATED??
 sub getPackagesInPackageSet
 {
 #########################################################################
@@ -250,7 +250,7 @@ sub getPackagesInstalled
 #########################################################################
 #  Subroutine: populateTable                                            #
 #  Parameter : Name of the selected package set                         #
-#  Returns   : Nothing                                                  #
+#  Returns   : -1 if error, 0 else.                                     #
 #  This subroutine should be called when you want to populate the       #
 #  table, either from scratch, or a "refresh".  If this function has    #
 #  never been called before, then it adds all of the packages and their #
@@ -264,64 +264,74 @@ sub populateTable ($) {
     $currSet = shift;    # The package set selected in the ComboBox
     my $success;         # Return result for database commands
 
+    # If the selection is empty (it happens when Selector runs for the first
+    # time), we just exit (thus the window appears quickly, especially if remote
+    # repositories are used).
     return if ($currSet eq "");
 
     # Check to see if we have already built the table or not.
     if (!$tablePopulated) {
         $tablePopulated = 1;  # So we add stuff to the cells only once
 
+        # We get the list of OPKGs in the package set
+        my $os = OSCAR::OCA::OS_Detect::open();
+        if (!defined $os) {
+            carp "ERROR: Impossible to detect the local distribution";
+            return -1;
+        }
+        my $distro_id = "$os->{'distro'}-$os->{'distro_version'}-$os->{'arch'}";
+        my @available_opkgs
+            = OSCAR::PackageSet::get_list_opkgs_in_package_set ($currSet,
+                                                                $distro_id);
+        OSCAR::Utils::print_array (@available_opkgs);
         # Get the list of all available packages
-        my $allPackages = SelectorUtils::getAllPackages();
+#         my $allPackages = SelectorUtils::getAllPackages();
 
         my $rownum = 0;
 
-        my %should_not_install = ();
-        my @results = ();
-        get_node_package_status_with_node(
-            "oscar_server",\@results, \%options,\@errors,2 );
-        foreach my $result_ref (@results) {
-            my $pack = $$result_ref{package};
-            $should_not_install{$pack} = 1;
-        }
+#         my %should_not_install = ();
+#         my @results = ();
+#         get_node_package_status_with_node(
+#             "oscar_server",\@results, \%options,\@errors,2 );
+#         foreach my $result_ref (@results) {
+#             my $pack = $$result_ref{package};
+#             $should_not_install{$pack} = 1;
+#         }
 
-        foreach my $pack (sort keys %{ $allPackages }) {
-            my $pkg = $$allPackages{$pack}->{package};
+        foreach my $opkg (@available_opkgs) {
             # Don't even bother to display non-installable packages
             # next if ($allPackages->{$pack}{installable} != 1);
             #next if ( $should_not_install{$pack} );
             setNumRows($rownum+1); 
 
             # Column 0 contains "short" names of packages
-            my $item = SelectorTableItem(this,Qt::TableItem::Never(),$pkg);
-            setItem($rownum,0,$item);
+            my $item = SelectorTableItem(this,Qt::TableItem::Never(), $opkg);
+            setItem($rownum, 0, $item);
 
             # Column 1 contains checkboxes
             my $checkbox = SelectorCheckTableItem(this,"");
-            setItem($rownum,1,$checkbox);
+            setItem($rownum, 1, $checkbox);
 
             # Column 2 contains the long names of packages
-            $item = SelectorTableItem(this,Qt::TableItem::Never(),
-                                      $allPackages->{$pack}{package});
-            setItem($rownum,2,$item);
+            $item = SelectorTableItem(this, Qt::TableItem::Never(), $opkg);
+            setItem($rownum, 2, $item);
 
             # Column 3 contains the "class" of packages
+            my @core_opkgs = OSCAR::Opkg::get_list_core_opkgs ();
             my $opkg_class;
-            if ($allPackages->{$pack}{group}) {
-                $opkg_class = $allPackages->{$pack}{group};
-                if ($allPackages->{$pack}{class}) {
-                    $opkg_class .= ":" . $allPackages->{$pack}{class};
-                }
-            } elsif ($allPackages->{$pack}{class}) {
-                $opkg_class = $allPackages->{$pack}{class};
+            if (OSCAR::Utils::is_element_in_array ($opkg, @core_opkgs) == 1) {
+                $opkg_class = "Core";
+            } else {
+                $opkg_class = "Included";
             }
             $item = SelectorTableItem(this,Qt::TableItem::Never(), $opkg_class);
             setItem($rownum,3,$item);
 
             # Column 4 contains the Location + Version
-            $item = SelectorTableItem(this,Qt::TableItem::Never(),
-                                      $allPackages->{$pack}{location} . " " .
-                                      $allPackages->{$pack}{version});
-            setItem($rownum,4,$item);
+#             $item = SelectorTableItem(this,Qt::TableItem::Never(),
+#                                       $allPackages->{$pack}{location} . " " .
+#                                       $allPackages->{$pack}{version});
+#             setItem($rownum,4,$item);
 
             $rownum++;
         }
@@ -372,7 +382,7 @@ sub populateTable ($) {
                 item($rownum,1)->setChecked(1) ;
             }
         }
-    } else { 
+    } else {
         # Running as the 'Selector'.  Check boxes according to package set.
         # Set the newly selected package set as the "selected" one in oda
         $success = OSCAR::Database::set_groups_selected($currSet, \%options,
@@ -395,6 +405,7 @@ sub populateTable ($) {
                 ($packagesInSet->{text($rownum,0)} == 1)));
         }
     }
+    return 0;
 }
 
 sub isPackageInPackageSet
