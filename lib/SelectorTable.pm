@@ -43,14 +43,16 @@ use Qt::slots
     populateTable => [ 'const QString&' ],
     cellValueChanged => [ 'int', 'int' ];
 
-use lib "$ENV{OSCAR_HOME}/lib";
+# use lib "$ENV{OSCAR_HOME}/lib";
 use OSCAR::Database;
 use OSCAR::Package;
 use OSCAR::OpkgDB;
 use OSCAR::PackageSet;
 use OSCAR::OCA::OS_Detect;
 use OSCAR::Utils;
+use OSCAR::ODA_Defs;
 use Carp;
+
 my %options = ();
 my @errors = ();
 my $tablePopulated = 0;     # So we call populateTable only once
@@ -283,7 +285,12 @@ sub populateTable ($) {
         my @available_opkgs
             = OSCAR::PackageSet::get_list_opkgs_in_package_set ($currSet,
                                                                 $distro_id);
-        OSCAR::Utils::print_array (@available_opkgs);
+
+        # We get the current selection
+        my %selection_data 
+            = OSCAR::Database::get_opkgs_selection_data (@available_opkgs);
+        OSCAR::Utils::print_hash ("", "current selection", \%selection_data);
+
         # Get the list of all available packages
 #         my $allPackages = SelectorUtils::getAllPackages();
 
@@ -311,6 +318,11 @@ sub populateTable ($) {
             # Column 1 contains checkboxes
             my $checkbox = SelectorCheckTableItem(this,"");
             setItem($rownum, 1, $checkbox);
+            # TODO: we should use what is in ODA_Defs and not a static value
+            my $selected = 2;
+            if ($selection_data{$opkg} == $selected) {
+                $checkbox->setChecked(1);
+            }
 
             # Column 2 contains the long names of packages
             $item = SelectorTableItem(this, Qt::TableItem::Never(), $opkg);
@@ -344,67 +356,67 @@ sub populateTable ($) {
         adjustColumn(2);
     }
 
-    if (parent()->parent()->installuninstall > 0) {
-        # Running as the 'Updater'.  Check boxes according to 'installed' bit.
-        # Get list of packages that have their 'installed' bit set.
-        my $packagesInstalled = getPackagesInstalled();
-        # Get the lists of packages marked to be installed/uninstalled
-        my @packagesToBeInstalled;    # Array
-        my $packagesToBeInstalled;    # Hash ref of transformed array
-        my @packagesToBeUninstalled;  # Array
-        my $packagesToBeUninstalled;  # Hash ref of transformed array
-        $success = OSCAR::Database::get_node_package_status_with_node(
-            "oscar_server",\@packagesToBeInstalled,\%options,\@errors, 2 );
-        $success = OSCAR::Database::get_node_package_status_with_node(
-            "oscar_server",\@packagesToBeUninstalled,\%options,\@errors, 1 );
-        # Transform these lists into hashes
-        foreach my $pack_ref (@packagesToBeInstalled) {
-            my $pack = $$pack_ref{package};
-            $packagesToBeInstalled->{$pack} = 1;
-        }
-        foreach my $pack_ref (@packagesToBeUninstalled) {
-            my $pack = $$pack_ref{package};
-            $packagesToBeUninstalled->{$pack} = 1;
-        }
-
-        # Go through table and check the boxes ON if 
-        #   (a) the package is supposed to be installed OR 
-        #   (b) the package is currently installed and not supposed to be
-        #       uninstalled.
-        for (my $rownum = 0; $rownum < numRows(); $rownum++) {
-            my $packname = text($rownum,0);
-            if (((defined $packagesToBeInstalled->{$packname})
-                && ($packagesToBeInstalled->{$packname} == 1))
-                ||
-                ((defined $packagesInstalled->{$packname})
-                && ($packagesInstalled->{$packname} == 1)
-                && (!$packagesToBeUninstalled->{$packname}))) {
-                item($rownum,1)->setChecked(1) ;
-            }
-        }
-    } else {
-        # Running as the 'Selector'.  Check boxes according to package set.
-        # Set the newly selected package set as the "selected" one in oda
-        $success = OSCAR::Database::set_groups_selected($currSet, \%options,
-                                                        \@errors);
-        if (!$success) {
-            Carp::carp("Could not do oda command " .
-                       "'set_groups_selected $currSet'");
-            return;
-        }
-
-        # Get the list of packages in the currently selected package set 
-        # and make those packages "checked".
-        my $packagesInSet = getPackagesInPackageSet($currSet);
-
-        # Now, go through all of the rows and set the checked status as required
-        for (my $rownum = 0; $rownum < numRows(); $rownum++) {
-            item($rownum,1)->setChecked(
-                ((defined $packagesInSet->{text($rownum,0)})
-                &&
-                ($packagesInSet->{text($rownum,0)} == 1)));
-        }
-    }
+#     if (parent()->parent()->installuninstall > 0) {
+#         # Running as the 'Updater'.  Check boxes according to 'installed' bit.
+#         # Get list of packages that have their 'installed' bit set.
+#         my $packagesInstalled = getPackagesInstalled();
+#         # Get the lists of packages marked to be installed/uninstalled
+#         my @packagesToBeInstalled;    # Array
+#         my $packagesToBeInstalled;    # Hash ref of transformed array
+#         my @packagesToBeUninstalled;  # Array
+#         my $packagesToBeUninstalled;  # Hash ref of transformed array
+#         $success = OSCAR::Database::get_node_package_status_with_node(
+#             "oscar_server",\@packagesToBeInstalled,\%options,\@errors, 2 );
+#         $success = OSCAR::Database::get_node_package_status_with_node(
+#             "oscar_server",\@packagesToBeUninstalled,\%options,\@errors, 1 );
+#         # Transform these lists into hashes
+#         foreach my $pack_ref (@packagesToBeInstalled) {
+#             my $pack = $$pack_ref{package};
+#             $packagesToBeInstalled->{$pack} = 1;
+#         }
+#         foreach my $pack_ref (@packagesToBeUninstalled) {
+#             my $pack = $$pack_ref{package};
+#             $packagesToBeUninstalled->{$pack} = 1;
+#         }
+# 
+#         # Go through table and check the boxes ON if 
+#         #   (a) the package is supposed to be installed OR 
+#         #   (b) the package is currently installed and not supposed to be
+#         #       uninstalled.
+#         for (my $rownum = 0; $rownum < numRows(); $rownum++) {
+#             my $packname = text($rownum,0);
+#             if (((defined $packagesToBeInstalled->{$packname})
+#                 && ($packagesToBeInstalled->{$packname} == 1))
+#                 ||
+#                 ((defined $packagesInstalled->{$packname})
+#                 && ($packagesInstalled->{$packname} == 1)
+#                 && (!$packagesToBeUninstalled->{$packname}))) {
+#                 item($rownum,1)->setChecked(1) ;
+#             }
+#         }
+#     } else {
+#         # Running as the 'Selector'.  Check boxes according to package set.
+#         # Set the newly selected package set as the "selected" one in oda
+#         $success = OSCAR::Database::set_groups_selected($currSet, \%options,
+#                                                         \@errors);
+#         if (!$success) {
+#             Carp::carp("Could not do oda command " .
+#                        "'set_groups_selected $currSet'");
+#             return;
+#         }
+# 
+#         # Get the list of packages in the currently selected package set 
+#         # and make those packages "checked".
+#         my $packagesInSet = getPackagesInPackageSet($currSet);
+# 
+#         # Now, go through all of the rows and set the checked status as required
+#         for (my $rownum = 0; $rownum < numRows(); $rownum++) {
+#             item($rownum,1)->setChecked(
+#                 ((defined $packagesInSet->{text($rownum,0)})
+#                 &&
+#                 ($packagesInSet->{text($rownum,0)} == 1)));
+#         }
+#     }
     return 0;
 }
 
