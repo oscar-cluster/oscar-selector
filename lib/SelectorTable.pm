@@ -281,30 +281,28 @@ sub populateTable ($) {
             carp "ERROR: Impossible to detect the local distribution";
             return -1;
         }
-        my $distro_id = "$os->{'distro'}-$os->{'distro_version'}-$os->{'arch'}";
+        my $distro_id = 
+            "$os->{'compat_distro'}-$os->{'compat_distrover'}-$os->{'arch'}";
         my @available_opkgs
             = OSCAR::PackageSet::get_list_opkgs_in_package_set ($currSet,
                                                                 $distro_id);
 
+        # We get available data about those packages from ODA
+        my @opkgs_data;
+        my %options = (debug => 0);
+        if (OSCAR::Database::get_packages (\@opkgs_data, \%options, undef,
+                                       distro => $distro_id) != 1) {
+            carp "ERROR: Impossible to get OPKGs data for $distro_id";
+            return undef;
+        }
+
         # We get the current selection
         my %selection_data 
             = OSCAR::Database::get_opkgs_selection_data (@available_opkgs);
-        OSCAR::Utils::print_hash ("", "current selection", \%selection_data);
-
-        # Get the list of all available packages
-#         my $allPackages = SelectorUtils::getAllPackages();
 
         my $rownum = 0;
 
-#         my %should_not_install = ();
-#         my @results = ();
-#         get_node_package_status_with_node(
-#             "oscar_server",\@results, \%options,\@errors,2 );
-#         foreach my $result_ref (@results) {
-#             my $pack = $$result_ref{package};
-#             $should_not_install{$pack} = 1;
-#         }
-
+        my ($location, $version);
         foreach my $opkg (@available_opkgs) {
             # Don't even bother to display non-installable packages
             # next if ($allPackages->{$pack}{installable} != 1);
@@ -340,10 +338,15 @@ sub populateTable ($) {
             setItem($rownum,3,$item);
 
             # Column 4 contains the Location + Version
-#             $item = SelectorTableItem(this,Qt::TableItem::Never(),
-#                                       $allPackages->{$pack}{location} . " " .
-#                                       $allPackages->{$pack}{version});
-#             setItem($rownum,4,$item);
+            foreach my $opkg_ref (@opkgs_data) {
+                if ($$opkg_ref{package} eq $opkg) {
+                    $location = $$opkg_ref{repository};
+                    $version = $$opkg_ref{version};
+                }
+            }
+            $item = SelectorTableItem(this,Qt::TableItem::Never(),
+                                      $location . " " . $version);
+            setItem($rownum,4,$item);
 
             $rownum++;
         }
