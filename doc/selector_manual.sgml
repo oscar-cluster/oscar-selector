@@ -63,6 +63,13 @@
     OSCAR repositories and the handling of binary packages is performed by the 
     OSCAR Repository Manager (ORM) at a later time.
   </para>
+  <para>
+    Moreover, there is not need to query repositories: we assume that the 
+    repositories already has been queried and therefore data about all available
+    OSCAR packages should be in the database (ODA). This also means that
+    <emphasis>Selector only set/get data to/from ODA</emphasis>, which makes it
+    very fast and reactive (important points when providing a GUI).
+  </para>
 </sect1>
 
 <sect1><title>Package Sets and OSCAR Packages</title>
