@@ -291,7 +291,7 @@ sub populateTable ($) {
         my @opkgs_data;
         my %options = (debug => 0);
         if (OSCAR::Database::get_packages (\@opkgs_data, \%options, undef,
-                                       distro => $distro_id) != 1) {
+                                       distro => '$distro_id') != 1) {
             carp "ERROR: Impossible to get OPKGs data for $distro_id";
             return undef;
         }
@@ -304,9 +304,6 @@ sub populateTable ($) {
 
         my ($location, $version);
         foreach my $opkg (@available_opkgs) {
-            # Don't even bother to display non-installable packages
-            # next if ($allPackages->{$pack}{installable} != 1);
-            #next if ( $should_not_install{$pack} );
             setNumRows($rownum+1); 
 
             # Column 0 contains "short" names of packages
@@ -316,9 +313,7 @@ sub populateTable ($) {
             # Column 1 contains checkboxes
             my $checkbox = SelectorCheckTableItem(this,"");
             setItem($rownum, 1, $checkbox);
-            # TODO: we should use what is in ODA_Defs and not a static value
-            my $selected = 2;
-            if ($selection_data{$opkg} == $selected) {
+            if ($selection_data{$opkg} == OSCAR::ODA_Defs::SELECTED()) {
                 $checkbox->setChecked(1);
             }
 
@@ -338,7 +333,7 @@ sub populateTable ($) {
             setItem($rownum,3,$item);
 
             # Column 4 contains the Location + Version
-            foreach my $opkg_ref (@opkgs_data) {
+            foreach my $opkg_ref (@opkgs_data) { # We look for the OPKG
                 if ($$opkg_ref{package} eq $opkg) {
                     $location = $$opkg_ref{repository};
                     $version = $$opkg_ref{version};
@@ -359,67 +354,6 @@ sub populateTable ($) {
         adjustColumn(2);
     }
 
-#     if (parent()->parent()->installuninstall > 0) {
-#         # Running as the 'Updater'.  Check boxes according to 'installed' bit.
-#         # Get list of packages that have their 'installed' bit set.
-#         my $packagesInstalled = getPackagesInstalled();
-#         # Get the lists of packages marked to be installed/uninstalled
-#         my @packagesToBeInstalled;    # Array
-#         my $packagesToBeInstalled;    # Hash ref of transformed array
-#         my @packagesToBeUninstalled;  # Array
-#         my $packagesToBeUninstalled;  # Hash ref of transformed array
-#         $success = OSCAR::Database::get_node_package_status_with_node(
-#             "oscar_server",\@packagesToBeInstalled,\%options,\@errors, 2 );
-#         $success = OSCAR::Database::get_node_package_status_with_node(
-#             "oscar_server",\@packagesToBeUninstalled,\%options,\@errors, 1 );
-#         # Transform these lists into hashes
-#         foreach my $pack_ref (@packagesToBeInstalled) {
-#             my $pack = $$pack_ref{package};
-#             $packagesToBeInstalled->{$pack} = 1;
-#         }
-#         foreach my $pack_ref (@packagesToBeUninstalled) {
-#             my $pack = $$pack_ref{package};
-#             $packagesToBeUninstalled->{$pack} = 1;
-#         }
-# 
-#         # Go through table and check the boxes ON if 
-#         #   (a) the package is supposed to be installed OR 
-#         #   (b) the package is currently installed and not supposed to be
-#         #       uninstalled.
-#         for (my $rownum = 0; $rownum < numRows(); $rownum++) {
-#             my $packname = text($rownum,0);
-#             if (((defined $packagesToBeInstalled->{$packname})
-#                 && ($packagesToBeInstalled->{$packname} == 1))
-#                 ||
-#                 ((defined $packagesInstalled->{$packname})
-#                 && ($packagesInstalled->{$packname} == 1)
-#                 && (!$packagesToBeUninstalled->{$packname}))) {
-#                 item($rownum,1)->setChecked(1) ;
-#             }
-#         }
-#     } else {
-#         # Running as the 'Selector'.  Check boxes according to package set.
-#         # Set the newly selected package set as the "selected" one in oda
-#         $success = OSCAR::Database::set_groups_selected($currSet, \%options,
-#                                                         \@errors);
-#         if (!$success) {
-#             Carp::carp("Could not do oda command " .
-#                        "'set_groups_selected $currSet'");
-#             return;
-#         }
-# 
-#         # Get the list of packages in the currently selected package set 
-#         # and make those packages "checked".
-#         my $packagesInSet = getPackagesInPackageSet($currSet);
-# 
-#         # Now, go through all of the rows and set the checked status as required
-#         for (my $rownum = 0; $rownum < numRows(); $rownum++) {
-#             item($rownum,1)->setChecked(
-#                 ((defined $packagesInSet->{text($rownum,0)})
-#                 &&
-#                 ($packagesInSet->{text($rownum,0)} == 1)));
-#         }
-#     }
     return 0;
 }
 
@@ -538,137 +472,137 @@ sub checkboxChangedForSelector
 
   my $success;  # Value returned by database commands
 
-  my $allPackages = SelectorUtils::getAllPackages();
-#  my @opkgs = OSCAR::OpkgDB::opkg_list_available(%scope);
-  my $donothing = 0;
-  my($reqhash,$conhash,$reqkey,$conkey);
-
-  # If we clicked on a checkbox, we should try to add/remove the 
-  # corresponding package from the current package set.
-  my $packagesInSet = getPackagesInPackageSet($currSet);
-  my $package = item($row,0)->text();
-  if (item($row,1)->isChecked())
-    { 
-      # Find out if the package is in the package set or not
-      if ((!(defined $packagesInSet->{$package})) || 
-          ($packagesInSet->{$package} != 1))
-        { # Package is NOT in the package set but should be -> add it!
-          # Check for requires AND conflicts.
-          # First, get list of recursively required packages for checkbox.
-          $reqhash = SelectorUtils::getRequiresList($reqhash,$package);
-          # Add in any 'core' packages which are selected since they are
-          # always required and should never have any conflicts (i.e.
-          # become unselected).
-          foreach my $pkg (keys %{ $allPackages })
-#          foreach my $pkg (@opkgs)
-            {
-              $reqhash->{$pkg} = 1 if 
-                ((defined $allPackages->{$package}{class}) &&
-                 ($allPackages->{$package}{class} eq 'core'));
-            }
-
-          # Get a list of packages conflicting with the required ones.
-          $conhash = SelectorUtils::getConflictsList($reqhash);
-
-          # Check to see if the conflicts and the requires list coincide
-          foreach $conkey (keys %{ $conhash })
-            {
-              if ($reqhash->{$conkey})
-                { # ERROR! Conflict - print error message and do nothing
-                  Carp::carp("ERROR! Package $conkey is required by AND " .
-                             "conflicts with $package");
-                  $donothing = 1;
-                }
-            }
-
-          # If there was no conflict, then select/unselect checkboxes
-          if (!$donothing)
-            { # Select all of the 'requires'
-              foreach $reqkey (keys %{ $reqhash })
-                {
-                  setCheckBoxForPackage($reqkey,1);
-                  # Add the package to the package set if necessary
-                  if ((!(defined $packagesInSet->{$reqkey})) || 
-                      ($packagesInSet->{$reqkey} != 1))
-                    {
-                      $success = OSCAR::Database::set_group_packages(
-                            $currSet,$reqkey,2,\%options,\@errors);
-                      Carp::carp("Could not do oda command 
-                        'set_group_packages $reqkey $currSet'") if 
-                          (!$success);
-                      $packagesInSet->{$reqkey} = 1;
-                    }
-                }
-              # Unselect all of the 'conflicts'
-              foreach $conkey (keys %{ $conhash })
-                {
-                  setCheckBoxForPackage($conkey,0);
-                  # Remove the package from the package set if necessary
-                  if ((defined $packagesInSet->{$conkey}) &&
-                      ($packagesInSet->{$conkey} == 1))
-                    {
-                      $success = OSCAR::Database::delete_group_packages(
-                        $currSet,$conkey,\%options,\@errors);
-                      Carp::carp("Could not do oda command 'delete_group_packages".
-                        " $conkey $currSet'") if 
-                          (!$success);
-                      undef $packagesInSet->{$conkey};
-                    }
-                  
-                }
-            }
-
-          # Finally, add the checked package to the current package set
-          if ((!(defined $packagesInSet->{$package})) || 
-              ($packagesInSet->{$package} != 1))
-            {
-              $success = OSCAR::Database::set_group_packages(
-                    $currSet,$package,2,\%options,\@errors);
-              Carp::carp("Could not do oda command 
-                'set_group_packages $package $currSet'") if(!$success);
-            }
-        }
-    }
-  else # Checkbox is not checked
-    {
-      # Find out if the package is in the package set or not
-      if ((defined $packagesInSet->{$package}) || 
-          ($packagesInSet->{$package} == 1))
-        { # Package IS in the package set but should NOT be -> remove it!
-          # Check for things that require it and unselect all of those
-          # checkboxes EXCEPT for those buttons that are 'core'.
-          $reqhash = SelectorUtils::getIsRequiredByList($reqhash,$package);
-          foreach $reqkey (keys %{ $reqhash })
-            {
-              if (!((defined $allPackages->{$reqkey}{class}) &&
-                    ($allPackages->{$reqkey}{class} eq 'core')))
-                {
-                  setCheckBoxForPackage($reqkey,0);
-                  if ((defined $packagesInSet->{$reqkey}) || 
-                      ($packagesInSet->{$reqkey} == 1))
-                    {
-                      $success = OSCAR::Database::delete_group_packages(
-                        $currSet,$reqkey,\%options,\@errors);
-                      Carp::carp("Could not do oda command 
-                        'delete_group_packages " .
-                          "$reqkey $currSet'") if (!$success);
-                      undef $packagesInSet->{$reqkey};
-                    }
-                }
-            }
-
-          # Finally, remove the unchecked box from the current package set
-          if ((defined $packagesInSet->{$package}) || 
-              ($packagesInSet->{$package} == 1))
-            {
-              $success = OSCAR::Database::delete_group_packages(
-                $currSet,$package,\%options,\@errors);
-              Carp::carp("Could not do oda command 'delete_group_packages".
-                " $package $currSet'") if 
-                  (!$success);
-            }
-        }
-    }
+#   my $allPackages = SelectorUtils::getAllPackages();
+# #  my @opkgs = OSCAR::OpkgDB::opkg_list_available(%scope);
+#   my $donothing = 0;
+#   my($reqhash,$conhash,$reqkey,$conkey);
+# 
+#   # If we clicked on a checkbox, we should try to add/remove the 
+#   # corresponding package from the current package set.
+#   my $packagesInSet = getPackagesInPackageSet($currSet);
+#   my $package = item($row,0)->text();
+#   if (item($row,1)->isChecked())
+#     { 
+#       # Find out if the package is in the package set or not
+#       if ((!(defined $packagesInSet->{$package})) || 
+#           ($packagesInSet->{$package} != 1))
+#         { # Package is NOT in the package set but should be -> add it!
+#           # Check for requires AND conflicts.
+#           # First, get list of recursively required packages for checkbox.
+#           $reqhash = SelectorUtils::getRequiresList($reqhash,$package);
+#           # Add in any 'core' packages which are selected since they are
+#           # always required and should never have any conflicts (i.e.
+#           # become unselected).
+#           foreach my $pkg (keys %{ $allPackages })
+# #          foreach my $pkg (@opkgs)
+#             {
+#               $reqhash->{$pkg} = 1 if 
+#                 ((defined $allPackages->{$package}{class}) &&
+#                  ($allPackages->{$package}{class} eq 'core'));
+#             }
+# 
+#           # Get a list of packages conflicting with the required ones.
+#           $conhash = SelectorUtils::getConflictsList($reqhash);
+# 
+#           # Check to see if the conflicts and the requires list coincide
+#           foreach $conkey (keys %{ $conhash })
+#             {
+#               if ($reqhash->{$conkey})
+#                 { # ERROR! Conflict - print error message and do nothing
+#                   Carp::carp("ERROR! Package $conkey is required by AND " .
+#                              "conflicts with $package");
+#                   $donothing = 1;
+#                 }
+#             }
+# 
+#           # If there was no conflict, then select/unselect checkboxes
+#           if (!$donothing)
+#             { # Select all of the 'requires'
+#               foreach $reqkey (keys %{ $reqhash })
+#                 {
+#                   setCheckBoxForPackage($reqkey,1);
+#                   # Add the package to the package set if necessary
+#                   if ((!(defined $packagesInSet->{$reqkey})) || 
+#                       ($packagesInSet->{$reqkey} != 1))
+#                     {
+#                       $success = OSCAR::Database::set_group_packages(
+#                             $currSet,$reqkey,2,\%options,\@errors);
+#                       Carp::carp("Could not do oda command 
+#                         'set_group_packages $reqkey $currSet'") if 
+#                           (!$success);
+#                       $packagesInSet->{$reqkey} = 1;
+#                     }
+#                 }
+#               # Unselect all of the 'conflicts'
+#               foreach $conkey (keys %{ $conhash })
+#                 {
+#                   setCheckBoxForPackage($conkey,0);
+#                   # Remove the package from the package set if necessary
+#                   if ((defined $packagesInSet->{$conkey}) &&
+#                       ($packagesInSet->{$conkey} == 1))
+#                     {
+#                       $success = OSCAR::Database::delete_group_packages(
+#                         $currSet,$conkey,\%options,\@errors);
+#                       Carp::carp("Could not do oda command 'delete_group_packages".
+#                         " $conkey $currSet'") if 
+#                           (!$success);
+#                       undef $packagesInSet->{$conkey};
+#                     }
+#                   
+#                 }
+#             }
+# 
+#           # Finally, add the checked package to the current package set
+#           if ((!(defined $packagesInSet->{$package})) || 
+#               ($packagesInSet->{$package} != 1))
+#             {
+#               $success = OSCAR::Database::set_group_packages(
+#                     $currSet,$package,2,\%options,\@errors);
+#               Carp::carp("Could not do oda command 
+#                 'set_group_packages $package $currSet'") if(!$success);
+#             }
+#         }
+#     }
+#   else # Checkbox is not checked
+#     {
+#       # Find out if the package is in the package set or not
+#       if ((defined $packagesInSet->{$package}) || 
+#           ($packagesInSet->{$package} == 1))
+#         { # Package IS in the package set but should NOT be -> remove it!
+#           # Check for things that require it and unselect all of those
+#           # checkboxes EXCEPT for those buttons that are 'core'.
+#           $reqhash = SelectorUtils::getIsRequiredByList($reqhash,$package);
+#           foreach $reqkey (keys %{ $reqhash })
+#             {
+#               if (!((defined $allPackages->{$reqkey}{class}) &&
+#                     ($allPackages->{$reqkey}{class} eq 'core')))
+#                 {
+#                   setCheckBoxForPackage($reqkey,0);
+#                   if ((defined $packagesInSet->{$reqkey}) || 
+#                       ($packagesInSet->{$reqkey} == 1))
+#                     {
+#                       $success = OSCAR::Database::delete_group_packages(
+#                         $currSet,$reqkey,\%options,\@errors);
+#                       Carp::carp("Could not do oda command 
+#                         'delete_group_packages " .
+#                           "$reqkey $currSet'") if (!$success);
+#                       undef $packagesInSet->{$reqkey};
+#                     }
+#                 }
+#             }
+# 
+#           # Finally, remove the unchecked box from the current package set
+#           if ((defined $packagesInSet->{$package}) || 
+#               ($packagesInSet->{$package} == 1))
+#             {
+#               $success = OSCAR::Database::delete_group_packages(
+#                 $currSet,$package,\%options,\@errors);
+#               Carp::carp("Could not do oda command 'delete_group_packages".
+#                 " $package $currSet'") if 
+#                   (!$success);
+#             }
+#         }
+#     }
 }
 
 sub checkboxChangedForUpdater

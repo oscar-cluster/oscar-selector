@@ -23,6 +23,8 @@ use Qt;
 use SelectorTable;
 use lib "$ENV{OSCAR_HOME}/lib";
 use OSCAR::Opkg;
+use OSCAR::ODA_Defs;
+use OSCAR::Utils;
 use Qt::isa qw(Qt::MainWindow);
 use Qt::slots
     init => [],
@@ -73,6 +75,7 @@ use SelectorImages;
 use SelectorAbout;
 use lib "$ENV{OSCAR_HOME}/lib"; use OSCAR::Database;
 use Getopt::Long;
+use Carp;
 
 my %options = ();
 my @errors = ();
@@ -444,7 +447,6 @@ sub manageSetsButton_clicked
 
 }
 
-sub exitButton_clicked {
 
 #########################################################################
 #  Subroutine: exitButton_clicked                                       #
@@ -452,58 +454,35 @@ sub exitButton_clicked {
 #  Returns   : Nothing                                                  #
 #  When the exitButton is clicked, quit the application.                #
 #########################################################################
-
+sub exitButton_clicked () {
     # If the GUI is running as the 'Updater', then we need to go through
-    # the list of all packages and find out which ones need to be installed
-    # or uninstalled.  
+    # the list of all packages and find out which ones are selected.
 
     my $success;  # Return code for database commands
+    my %selection_data;
+    my $selection_value;
 
-    # Then scan the table for packages to be installed/uninstalled
-    my $allPackages = SelectorUtils::getAllPackages();
-    my $packagesInstalled = packageTable->getPackagesInstalled();
-    # Flag : selected
-    # 0 -> default (Selector has not touched the field)
-    # 1 -> unselected
-    # 2 -> selected
-    my $selected = 0;
-    for (my $row = 0; $row < packageTable->numRows(); $row++){
+    for (my $row = 0; $row < packageTable->numRows(); $row++) {
         my $package = packageTable->item($row,0)->text();
         my $checked = packageTable->item($row,1)->isChecked();
-        my @pstatus = ();
-        my $check = OSCAR::Database::get_node_package_status_with_node_package(
-        "oscar_server",$package,\@pstatus, \%options,\@errors);
-        my $pstatus_ref = pop @pstatus if $check;
-           
 
-        if (($packagesInstalled->{$package}) && (!$checked)){
-            # Need to uninstall package
-            # status : 1 == should_not_be_installed
-           
-            $selected  = 1;
-            print "Updating Node_Package_Status to should_not_be_installed\n"
-               if $options{debug};
-            $success = OSCAR::Database::update_node_package_status(  
-                     \%options,"oscar_server",$package,1,\@errors,$selected);
+        # We translate the selection in values that ODA understands
+        if ($checked == 1) {
+            $selection_value = OSCAR::ODA_Defs::SELECTED();
+        } else {
+            $selection_value = OSCAR::ODA_Defs::UNSELECTED();
         }
 
-        if ((!($packagesInstalled->{$package})) && ($checked)){
-            # Need to install package
-            # status : 2 == should_be_installed
-
-            $selected  = 2;
-            print "Updating Node_Package_Status to should_be_installed\n"
-                if $options{debug};
-            $success = OSCAR::Database::update_node_package_status(  
-                     \%options,"oscar_server",$package,2,\@errors,$selected);
-        }
+        # We add the OPKG and its selection value into the hash
+        $selection_data{$package} = $selection_value;
     }
 
-    OSCAR::Database::initialize_selected_flag(\%options,\@errors) 
-        if (installuninstall <= 0);
-    OSCAR::Opkg::write_pgroup_files();
-    Qt::Application::exit();
+    if (OSCAR::Database::set_opkgs_selection_data (%selection_data)) {
+        carp "ERROR: Impossible to update selection data in ODA";
+        return undef;
+    }
 
+    Qt::Application::exit();
 }
 
 sub cancelButton_clicked
@@ -537,15 +516,15 @@ sub updateTextBox
   my $package = shift;
 
   my $output = "";
-  my $allPackages = SelectorUtils::getAllPackages();
-
-  foreach my $row ( @{ $allPackages->{$package}{$box} } )
-    {
-      $output .= $row->{type} . ": " . $row->{name} . "\n";
-    }
-  # Use a sneaky 'eval' technique to choose the correct TextBox component
-  my $cmd = $box . 'TextBox->setText($output)';
-  eval $cmd;
+#   my $allPackages = SelectorUtils::getAllPackages();
+# 
+#   foreach my $row ( @{ $allPackages->{$package}{$box} } )
+#     {
+#       $output .= $row->{type} . ": " . $row->{name} . "\n";
+#     }
+#   # Use a sneaky 'eval' technique to choose the correct TextBox component
+#   my $cmd = $box . 'TextBox->setText($output)';
+#   eval $cmd;
 
 }
 
@@ -568,19 +547,19 @@ sub rowSelectionChanged
 
   # Find the "short name" of the package in that row
   my $package = packageTable->text($row,0);
-  my $allPackages = SelectorUtils::getAllPackages();
-
-  # Update the four infomrational text boxes
-  informationTextBox->setText($allPackages->{$package}{description});
-  updateTextBox("provides",$package);
-  updateTextBox("requires",$package);
-  updateTextBox("conflicts",$package);
-
-  # Update the packager names / emails
-  my $packagerStr = $allPackages->{$package}{packager};
-  $packagerStr =~ s:,\s*:\n:g;
-  $packagerStr .= "\n";
-  packagerTextBox->setText($packagerStr);
+#   my $allPackages = SelectorUtils::getAllPackages();
+# 
+#   # Update the four infomrational text boxes
+#   informationTextBox->setText($allPackages->{$package}{description});
+#   updateTextBox("provides",$package);
+#   updateTextBox("requires",$package);
+#   updateTextBox("conflicts",$package);
+# 
+#   # Update the packager names / emails
+#   my $packagerStr = $allPackages->{$package}{packager};
+#   $packagerStr =~ s:,\s*:\n:g;
+#   $packagerStr .= "\n";
+#   packagerTextBox->setText($packagerStr);
 
 }
 
