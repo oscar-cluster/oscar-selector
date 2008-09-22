@@ -1,0 +1,4 @@
+1.0:
+- Separate Selector from the rest of the OSCAR code.
+- Include the specification of Selector capabilities.
+- Make the implementation based on the specification.

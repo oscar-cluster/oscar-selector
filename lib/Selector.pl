@@ -528,8 +528,6 @@ sub updateTextBox
 
 }
 
-sub rowSelectionChanged
-{
 
 #########################################################################
 #  Subroutine: rowSelectedChanged                                       #
@@ -539,27 +537,36 @@ sub rowSelectionChanged
 #  We update the four text boxes at the bottom of the window:           #
 #  information (description), provides, requires, and conflicts.        #
 #########################################################################
+sub rowSelectionChanged () {
+    # Figure out which row of the table is now selected
+    my $row = packageTable->selection(0)->anchorRow();
 
-  # Figure out which row of the table is now selected
-  my $row = packageTable->selection(0)->anchorRow();
+    return if ($row < 0);
 
-  return if ($row < 0);
+    # Find the "short name" of the package in that row
+    my $package = packageTable->text($row,0);
+    my @res;
+    get_packages (\@res, undef, undef, package => "$package");
+    my $nb_res = scalar(@res);
+    if ($nb_res != 1) {
+        carp "ERROR: we did not get data for exactly one OPKG ($nb_res)\n";
+        return -1;
+    }
+    my $ref_hash = $res[0];
 
-  # Find the "short name" of the package in that row
-  my $package = packageTable->text($row,0);
-#   my $allPackages = SelectorUtils::getAllPackages();
-# 
-#   # Update the four infomrational text boxes
-#   informationTextBox->setText($allPackages->{$package}{description});
-#   updateTextBox("provides",$package);
+    # Update the four infomrational text boxes
+    informationTextBox->setText($$ref_hash{description});
+    updateTextBox("provides",$package);
+    # GV: requires and conflicts are kind of useless and we do not have a direct
+    # access to this data via ODA with the current implementation.
 #   updateTextBox("requires",$package);
 #   updateTextBox("conflicts",$package);
-# 
-#   # Update the packager names / emails
-#   my $packagerStr = $allPackages->{$package}{packager};
-#   $packagerStr =~ s:,\s*:\n:g;
-#   $packagerStr .= "\n";
-#   packagerTextBox->setText($packagerStr);
+
+    # Update the packager names / emails
+    my $packagerStr = $$ref_hash{packager};
+    $packagerStr =~ s:,\s*:\n:g;
+    $packagerStr .= "\n";
+    packagerTextBox->setText($packagerStr);
 
 }
 
