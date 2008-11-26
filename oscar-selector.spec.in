@@ -1,13 +1,13 @@
 %define binpref /usr/bin
 %define libpref PERLLIBPATH
-%define sharepref /usr/share/oscar/prereqs/oda/
+#%define sharepref /usr/share/oscar/prereqs/oda/
 %define bintarget $RPM_BUILD_ROOT%{binpref}
 %define libtarget $RPM_BUILD_ROOT%{libpref}
 
 Summary:        OSCAR Package Selector.
 Name:           oscar-selector
 Version:        1.0
-Release:        1
+Release:        2
 Vendor:         Open Cluster Group <http://OSCAR.OpenClusterGroup.org/>
 Distribution:   OSCAR
 Packager:       Geoffroy Vallee <valleegr@ornl.gov>
@@ -30,10 +30,12 @@ make install DESTDIR=$RPM_BUILD_ROOT
 
 %files
 %defattr(-,root,root)
-%{binpref}/*
+#%{binpref}/*
 %{libpref}/*
-%{sharepref}/*
+#%{sharepref}/*
 
 %changelog
+* Wed Nov 11 2008 Geoffroy Vallee <valleegr@ornl.gov> 1.0-2
+- clean up the spec file.
 * Thu Sep 11 2008 Geoffroy Vallee <valleegr@ornl.gov> 1.0-1
 - new upstream version (see ChangeLog for more details).

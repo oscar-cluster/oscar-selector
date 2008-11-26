@@ -33,6 +33,7 @@ dist: clean
 rpm: dist
 	sed -e "s/PERLLIBPATH/$(SEDLIBDIR)/" < oscar-selector.spec.in \
         > oscar-selector.spec
+	cp oscar-selector.tar.gz /usr/src/redhat/SOURCES
 	rpmbuild -bb ./oscar-selector.spec
 
 deb:

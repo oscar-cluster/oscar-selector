@@ -1,3 +1,7 @@
+1.0.1 (not yet released):
+- Clean up the spec file.
+- Ease the creation of RPMs.
+
 1.0:
 - Separate Selector from the rest of the OSCAR code.
 - Include the specification of Selector capabilities.
