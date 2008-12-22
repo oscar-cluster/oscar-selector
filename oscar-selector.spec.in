@@ -6,8 +6,8 @@
 
 Summary:        OSCAR Package Selector.
 Name:           oscar-selector
-Version:        1.0
-Release:        4
+Version:        1.0.1
+Release:        1
 Vendor:         Open Cluster Group <http://OSCAR.OpenClusterGroup.org/>
 Distribution:   OSCAR
 Packager:       Geoffroy Vallee <valleegr@ornl.gov>
@@ -36,6 +36,8 @@ make install DESTDIR=$RPM_BUILD_ROOT
 #%{sharepref}/*
 
 %changelog
+* Mon Dec 22 2008 Geoffroy Vallee <valleegr@ornl.gov> 1.0.1-1
+- New upstream version.
 * Thu Dec 04 2008 Geoffroy Vallee <valleegr@ornl.gov> 1.0-4
 - Move the libraries into a noarch directory.
 * Fri Nov 28 2008 Geoffroy Vallee <valleegr@ornl.gov> 1.0-3
