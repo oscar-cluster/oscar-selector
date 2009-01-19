@@ -1,3 +1,7 @@
+1.0.2 (not yet released):
+- Core packages are now always checked (a bug prevented to do so before).
+- Core packages cannot be unchecked (a bug prevented to do so before).
+
 1.0.1:
 - Clean up and improve the spec file.
 - Ease the creation of RPMs.

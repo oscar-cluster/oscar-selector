@@ -326,6 +326,8 @@ sub populateTable ($) {
             my $opkg_class;
             if (OSCAR::Utils::is_element_in_array ($opkg, @core_opkgs) == 1) {
                 $opkg_class = "Core";
+                # Core OPKGs are always selected!
+                $checkbox->setChecked(1);
             } else {
                 $opkg_class = "Included";
             }
@@ -442,7 +444,8 @@ sub cellValueChanged
 
   # We don't want to allow the user to uncheck core packages.  
   # So, when a core checkbox is clicked, make sure it's checked.
-  if ((item($row,3)->text() eq 'core') &&
+  my $class = item($row,3)->text();
+  if (($class eq 'core' || $class eq "Core") &&
       (!(item($row,1)->isChecked())))
     {
       setCheckBoxForPackage(item($row,0)->text(),1);

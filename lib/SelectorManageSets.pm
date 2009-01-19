@@ -365,7 +365,8 @@ sub newCoreButton_clicked
   my $allPackages = SelectorUtils::getAllPackages();
   foreach my $pack (keys %{ $allPackages })
     {
-      if ($allPackages->{$pack}{class} eq "core")
+      my $class = $allPackages->{$pack}{class};
+      if ($class eq "core" || $class eq "Core")
         {
           my $success = OSCAR::Database::set_group_packages(
                 $currSet, $pack, 2, \%options, \@errors);
