@@ -1,4 +1,4 @@
-1.0.2 (not yet released):
+1.0.2:
 - Core packages are now always checked (a bug prevented to do so before).
 - Core packages cannot be unchecked (a bug prevented to do so before).
 
