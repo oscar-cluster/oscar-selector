@@ -1,4 +1,5 @@
 DESTDIR=
+SOURCEDIR=/usr/src/redhat/SOURCES
 
 include ./Config.mk
 
@@ -33,7 +34,7 @@ dist: clean
 rpm: dist
 	sed -e "s/PERLLIBPATH/$(SEDLIBDIR)/" < oscar-selector.spec.in \
         > oscar-selector.spec
-	cp oscar-selector.tar.gz /usr/src/redhat/SOURCES
+	cp oscar-selector.tar.gz $(SOURCEDIR)
 	rpmbuild -bb ./oscar-selector.spec
 
 deb:
