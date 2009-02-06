@@ -1,5 +1,7 @@
 DESTDIR=
+PKGDEST=
 SOURCEDIR=/usr/src/redhat/SOURCES
+PKG=oscar-selector
 
 include ./Config.mk
 
@@ -16,26 +18,38 @@ uninstall:
 
 clean:
 	@rm -f build-stamp configure-stamp
-	@rm -rf debian/oscar-selector
-	@rm -f oscar-selector.tar.gz
-	@rm -f oscar-selector.spec
+	@rm -rf debian/$(PKG)
+	@rm -f $(PKG).tar.gz
+	@rm -f $(PKG).spec
 	for dir in ${SUBDIRS} ; do ( cd $$dir ; ${MAKE} clean ) ; done
 
 dist: clean
-	@rm -rf /tmp/oscar-selector
-	@mkdir -p /tmp/oscar-selector
-	@cp -rf * /tmp/oscar-selector
-	@cd /tmp/oscar-selector; rm -rf `find . -name ".svn"`
-	@cd /tmp; tar czf oscar-selector.tar.gz oscar-selector
-	@cp -f /tmp/oscar-selector.tar.gz .
-	@rm -rf /tmp/oscar-selector/
-	@rm -f /tmp/oscar-selector.tar.gz
+	@rm -rf /tmp/$(PKG)
+	@mkdir -p /tmp/$(PKG)
+	@cp -rf * /tmp/$(PKG)
+	@cd /tmp/$(PKG); rm -rf `find . -name ".svn"`
+	@cd /tmp; tar czf $(PKG).tar.gz $(PKG)
+	@cp -f /tmp/$(PKG).tar.gz .
+	@rm -rf /tmp/$(PKG)/
+	@rm -f /tmp/$(PKG).tar.gz
 
 rpm: dist
-	sed -e "s/PERLLIBPATH/$(SEDLIBDIR)/" < oscar-selector.spec.in \
-        > oscar-selector.spec
-	cp oscar-selector.tar.gz $(SOURCEDIR)
-	rpmbuild -bb ./oscar-selector.spec
+	sed -e "s/PERLLIBPATH/$(SEDLIBDIR)/" < $(PKG).spec.in \
+        > $(PKG).spec
+	cp $(PKG).tar.gz $(SOURCEDIR)
+	rpmbuild -bb ./$(PKG).spec
+	@if [ -n "$(PKGDEST)" ]; then \
+        mv `rpm --eval '%{_topdir}'`/RPMS/noarch/$(PKG)-*.noarch.rpm $(PKGDEST); \
+    fi
 
 deb:
-	dpkg-buildpackage -rfakeroot
+	@if [ -n "$$UNSIGNED_OSCAR_PKG" ]; then \
+        echo "dpkg-buildpackage -rfakeroot -us -uc"; \
+        dpkg-buildpackage -rfakeroot -us -uc; \
+    else \
+        echo "dpkg-buildpackage -rfakeroot"; \
+        dpkg-buildpackage -rfakeroot; \
+    fi
+	@if [ -n "$(PKGDEST)" ]; then \
+        mv ../$(PKG)*.deb $(PKGDEST); \
+    fi
