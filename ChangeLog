@@ -1,4 +1,4 @@
-1.0.3 (not yet released):
+1.0.3:
 - Modify the Makefile so we can choose the directory to save sources when
 creating RPMs.
 - Modify the Makefile so we can choose the directory where the binary packages
