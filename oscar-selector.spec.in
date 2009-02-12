@@ -1,8 +1,9 @@
 %define binpref /usr/bin
 %define libpref PERLLIBPATH
-#%define sharepref /usr/share/oscar/prereqs/oda/
+%define manpref /usr/local/man/man1/
 %define bintarget $RPM_BUILD_ROOT%{binpref}
 %define libtarget $RPM_BUILD_ROOT%{libpref}
+%define mantarget $RPM_BUILD_ROOT%{manpref}
 
 Summary:        OSCAR Package Selector.
 Name:           oscar-selector
@@ -33,7 +34,7 @@ make install DESTDIR=$RPM_BUILD_ROOT
 %defattr(-,root,root)
 %{binpref}/*
 %{libpref}/*
-%{sharepref}/*
+%{manpref}/*
 
 %changelog
 * Thu Feb 12 2009 Geoffroy Vallee <valleegr@ornl.gov> 1.1-1
