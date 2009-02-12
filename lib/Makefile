@@ -5,7 +5,7 @@ include $(TOPDIR)/Config.mk
 
 FILES := SelectorImages.pm SelectorTableItem.pm SelectorAbout.pm \
 		SelectorManageSets.pm SelectorTable.pm SelectorCheckTableItem.pm \
-		Selector.pl SelectorUtils.pm
+		Selector.pl SelectorUtils.pm PackageSet.pm
 SUBDIRS := 
 
 all:
