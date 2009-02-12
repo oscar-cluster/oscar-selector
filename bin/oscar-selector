@@ -29,10 +29,11 @@ BEGIN {
     }
 }
 
-my ($verbose, $debug, $list);
+my ($verbose, $debug, $list, $duplicate);
 
 GetOptions(
-        "list|l=s"                      => \$list,
+        "duplicate|d=s"                 => \$duplicate,
+        "list|l"                        => \$list,
         "debug"                         => \$debug,
         "verbose"                       => \$verbose,
         "help"                          => \&help,
@@ -60,26 +61,52 @@ if ($verbose) {
     $ENV{OSCAR_VERBOSE} = 5;
 }
 
-if ($list && !OSCAR::Utils::is_a_valid_string ($list)) {
-    my @ps = OSCAR::PackageSet::get_package_sets();
-    OSCAR::Utils::print_array (@ps);
+if ($list) {
+    my $set_name = $ARGV[0];
+    if (OSCAR::Utils::is_a_valid_string ($set_name)) {
+        print "Toto: $set_name\n";
+        require OSCAR::OCA::OS_Detect;
+        my $os = OSCAR::OCA::OS_Detect::open();
+        if (!defined $os && ref($os) ne "HASH") {
+            die "ERROR: Unsupported distro";
+        }
+        my $distro = "$os->{compat_distro}-$os->{compat_distrover}-$os->{arch}";
+        my @ps = OSCAR::PackageSet::get_package_sets();
+        if (OSCAR::Utils::is_element_in_array ($set_name, @ps)) {
+            my @opkgs = 
+                OSCAR::PackageSet::get_list_opkgs_in_package_set ($set_name, 
+                                                                  $distro);
+            OSCAR::Utils::print_array (@opkgs);
+        } else {
+            die "ERROR: Unknown package set ($set_name)";
+        }
+    } else {
+        print "Prout\n";
+        my @ps = OSCAR::PackageSet::get_package_sets();
+        OSCAR::Utils::print_array (@ps);
+    }
 }
 
-if ($list && OSCAR::Utils::is_a_valid_string ($list)) {
-    require OSCAR::OCA::OS_Detect;
-    my $os = OSCAR::OCA::OS_Detect::open();
-    if (!defined $os && ref($os) ne "HASH") {
-        die "ERROR: Unsupported distro";
-    }
-    my $distro = "$os->{compat_distro}-$os->{compat_distrover}-$os->{arch}";
-    print "$distro\n";
-    my @ps = OSCAR::PackageSet::get_package_sets();
-    if (OSCAR::Utils::is_element_in_array ($list, @ps)) {
-        my @opkgs = OSCAR::PackageSet::get_list_opkgs_in_package_set ($list, 
-                                                                      $distro);
-        OSCAR::Utils::print_array (@opkgs);
+if ($duplicate) {
+    my @ps = OSCAR::PackageSet::get_package_sets();    
+    if (OSCAR::Utils::is_a_valid_string ($duplicate) 
+        && OSCAR::Utils::is_element_in_array ($duplicate, @ps)) {
+        my $new_ps = $ARGV[0];
+        if (!OSCAR::Utils::is_a_valid_string ($new_ps)) {
+            die "ERROR: Invalid package set name ($new_ps)";
+        }
+        my $os = OSCAR::OCA::OS_Detect::open();
+        if (!defined $os && ref($os) ne "HASH") {
+            die "ERROR: Unsupported distro";
+        }
+        my $distro = "$os->{compat_distro}-$os->{compat_distrover}-$os->{arch}";
+        if (OSCAR::PackageSet::duplicate_package_set ($duplicate,
+                                                      $new_ps,
+                                                      $distro)) {
+            die "ERROR: Impossible to duplicate the package set";
+        }
     } else {
-        die "ERROR: Unknown package set ($list)";
+        die "ERROR: Invalid package set ($duplicate)";
     }
 }
 
@@ -89,3 +116,29 @@ exit 0;
 
 
 __END__
+
+=head1 NAME
+
+oscar-selector, a command line tool for OSCAR configuration.
+
+=head1 SYNOPSIS
+
+oscar-selector OPTIONS [ARGUMENTS]
+
+=head1 DESCRIPTION
+
+=head1 OPTIONS
+
+Recognized options include:
+
+=over 8
+
+=item --list | -l
+
+=item --duplicate | -d
+
+    Duplicate an existing package set, the name of the new package set is the first argument of the command.
+
+=cut
+
+
