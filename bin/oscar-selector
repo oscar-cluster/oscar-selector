@@ -1,0 +1,91 @@
+#!/usr/bin/env perl
+#
+
+#
+# Copyright (c) 2007-2008 Oak Ridge National Laboratory.
+#                         Geoffroy R. Vallee <valleegr@ornl.gov>
+#                         All rights reserved.
+#
+# This file is part of the OSCAR software package.  For license
+# information, see the COPYING file in the top level directory of the
+# OSCAR source distribution.
+#
+
+#
+# $Id: oscar-config 8007 2009-02-09 20:25:22Z valleegr $
+#
+
+use strict;
+use Carp;
+use Cwd qw(chdir cwd);
+use Getopt::Long;
+use OSCAR::PackageSet;
+use OSCAR::Utils;
+use warnings "all";
+
+BEGIN {
+    if (defined $ENV{OSCAR_HOME}) {
+        unshift @INC, "$ENV{OSCAR_HOME}/lib";
+    }
+}
+
+my ($verbose, $debug, $list);
+
+GetOptions(
+        "list|l=s"                      => \$list,
+        "debug"                         => \$debug,
+        "verbose"                       => \$verbose,
+        "help"                          => \&help,
+        ) || help_and_exit();
+
+sub help {
+    print "Usage: $0 OPTION\n";
+    print "\n";
+    print "Tool for the selection and management of OSCAR packages (OPKGs).\n";
+    print "For more details, please refer to the man page (man oscar-selector)\n";
+    print "\n";
+}
+
+sub help_and_exit {
+    help ();
+    exit 1;
+}
+
+my $initial_verbose_value = 0;
+$initial_verbose_value = $ENV{OSCAR_VERBOSE} if (defined $ENV{OSCAR_VERBOSE});
+if ($debug) {
+    $ENV{OSCAR_VERBOSE} = 10;
+}
+if ($verbose) {
+    $ENV{OSCAR_VERBOSE} = 5;
+}
+
+if ($list && !OSCAR::Utils::is_a_valid_string ($list)) {
+    my @ps = OSCAR::PackageSet::get_package_sets();
+    OSCAR::Utils::print_array (@ps);
+}
+
+if ($list && OSCAR::Utils::is_a_valid_string ($list)) {
+    require OSCAR::OCA::OS_Detect;
+    my $os = OSCAR::OCA::OS_Detect::open();
+    if (!defined $os && ref($os) ne "HASH") {
+        die "ERROR: Unsupported distro";
+    }
+    my $distro = "$os->{compat_distro}-$os->{compat_distrover}-$os->{arch}";
+    print "$distro\n";
+    my @ps = OSCAR::PackageSet::get_package_sets();
+    if (OSCAR::Utils::is_element_in_array ($list, @ps)) {
+        my @opkgs = OSCAR::PackageSet::get_list_opkgs_in_package_set ($list, 
+                                                                      $distro);
+        OSCAR::Utils::print_array (@opkgs);
+    } else {
+        die "ERROR: Unknown package set ($list)";
+    }
+}
+
+EXIT_SUCCESS:
+$ENV{OSCAR_VERBOSE} = $initial_verbose_value;
+exit 0;
+
+
+__END__

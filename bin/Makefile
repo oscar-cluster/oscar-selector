@@ -3,7 +3,7 @@ DESTDIR=
 TOPDIR=..
 include $(TOPDIR)/Config.mk
 
-SCRIPTS := 
+SCRIPTS := oscar-selector
 SUBDIRS :=
 
 man:
@@ -13,9 +13,9 @@ all:
 	for dir in ${SUBDIRS} ; do ( cd $$dir ; ${MAKE} all ) ; done
 
 install: man
-#	install -d -m 0755 $(DESTDIR)/usr/bin
-#	install    -m 0755 $(SCRIPTS) $(DESTDIR)/usr/bin
-#	for dir in ${SUBDIRS} ; do ( cd $$dir ; ${MAKE} install ) ; done
+	install -d -m 0755 $(DESTDIR)/usr/bin
+	install    -m 0755 $(SCRIPTS) $(DESTDIR)/usr/bin
+	for dir in ${SUBDIRS} ; do ( cd $$dir ; ${MAKE} install ) ; done
 
 uninstall:
 	cd $(DESTDIR)/usr/bin; rm -f $(SCRIPTS)
