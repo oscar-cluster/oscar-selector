@@ -1,3 +1,7 @@
+1.0.4:
+- Disable the "Manage Set" button since the base code is not ready to support
+such a functionality.
+
 1.0.3:
 - Modify the Makefile so we can choose the directory to save sources when
 creating RPMs.

@@ -154,10 +154,10 @@ sub NEW
     Qt::ToolTip::add(packageSetComboBox, trUtf8("Display the packages in this package set"));
     $Layout13->addWidget(packageSetComboBox);
 
-    manageSetsButton = Qt::PushButton(centralWidget(), "manageSetsButton");
-    manageSetsButton->setText(trUtf8("&Manage Sets"));
-    Qt::ToolTip::add(manageSetsButton, trUtf8("Add, delete, and rename package sets"));
-    $Layout13->addWidget(manageSetsButton);
+#     manageSetsButton = Qt::PushButton(centralWidget(), "manageSetsButton");
+#     manageSetsButton->setText(trUtf8("&Manage Sets"));
+#     Qt::ToolTip::add(manageSetsButton, trUtf8("Add, delete, and rename package sets"));
+#     $Layout13->addWidget(manageSetsButton);
     $Layout14->addLayout($Layout13);
     $Layout19->addLayout($Layout14);
 
