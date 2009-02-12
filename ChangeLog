@@ -1,3 +1,7 @@
+1.1:
+- Move the PackageSet.pm Perl module from oscar-base to Selector.
+- Include a oscar-selector script that enables the management of package sets.
+
 1.0.4:
 - Disable the "Manage Set" button since the base code is not ready to support
 such a functionality.

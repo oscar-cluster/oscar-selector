@@ -1,3 +1,9 @@
+oscar-selector (1.1-1) intrepid; urgency=low
+
+  * New upstream version.
+
+ -- Geoffroy Vallee <valleegr@ornl.gov>  Thu, 12 Feb 2009 18:50:34 -0500
+
 oscar-selector (1.0.4-1) intrepid; urgency=low
 
   * New upstream version.

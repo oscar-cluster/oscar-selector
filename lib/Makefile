@@ -3,9 +3,10 @@ DESTDIR=
 TOPDIR=..
 include $(TOPDIR)/Config.mk
 
-FILES := SelectorImages.pm SelectorTableItem.pm SelectorAbout.pm \
+UI_FILES := SelectorImages.pm SelectorTableItem.pm SelectorAbout.pm \
 		SelectorManageSets.pm SelectorTable.pm SelectorCheckTableItem.pm \
-		Selector.pl SelectorUtils.pm PackageSet.pm
+		Selector.pl SelectorUtils.pm
+FILES := PackageSet.pm
 SUBDIRS := 
 
 all:
@@ -13,7 +14,9 @@ all:
 
 install:
 	install -d -m 0755 $(DESTDIR)$(LIBDIR)/Qt
-	install    -m 0755 $(FILES) $(DESTDIR)$(LIBDIR)/Qt
+	install    -m 0755 ${UI_FILES} $(DESTDIR)$(LIBDIR)/Qt
+	install -d -m 0755 $(DESTDIR)$(LIBDIR)/OSCAR
+	install    -m 755 ${FILES} $(DESTDIR)$(LIBDIR)/OSCAR
 	for dir in ${SUBDIRS} ; do ( cd $$dir ; ${MAKE} install ) ; done
 
 uninstall:

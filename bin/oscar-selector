@@ -2,9 +2,9 @@
 #
 
 #
-# Copyright (c) 2007-2008 Oak Ridge National Laboratory.
-#                         Geoffroy R. Vallee <valleegr@ornl.gov>
-#                         All rights reserved.
+# Copyright (c) 2009 Oak Ridge National Laboratory.
+#                    Geoffroy R. Vallee <valleegr@ornl.gov>
+#                    All rights reserved.
 #
 # This file is part of the OSCAR software package.  For license
 # information, see the COPYING file in the top level directory of the
@@ -12,7 +12,7 @@
 #
 
 #
-# $Id: oscar-config 8007 2009-02-09 20:25:22Z valleegr $
+# $Id$
 #
 
 use strict;
@@ -29,11 +29,14 @@ BEGIN {
     }
 }
 
-my ($verbose, $debug, $list, $duplicate);
+my ($verbose, $debug, $list, $duplicate, $add_opkgs, $set, $new);
 
 GetOptions(
         "duplicate|d=s"                 => \$duplicate,
         "list|l"                        => \$list,
+        "add-opkgs"                     => \$add_opkgs,
+        "package-set|set=s"             => \$set,
+        "new-set|new=s"                 => \$new,
         "debug"                         => \$debug,
         "verbose"                       => \$verbose,
         "help"                          => \&help,
@@ -110,6 +113,78 @@ if ($duplicate) {
     }
 }
 
+if ($add_opkgs) {
+    if (!OSCAR::Utils::is_a_valid_string ($set)) {
+        die "ERROR: Invalid package set";
+    }
+
+    my @ps = OSCAR::PackageSet::get_package_sets();
+    if (!OSCAR::Utils::is_a_valid_string ($set) 
+        || !OSCAR::Utils::is_element_in_array ($set, @ps)) {
+        die "ERROR: Invalid package set";
+    }
+
+    my $os = OSCAR::OCA::OS_Detect::open();
+    if (!defined $os && ref($os) ne "HASH") {
+        die "ERROR: Unsupported distro";
+    }
+    my $distro = "$os->{compat_distro}-$os->{compat_distrover}-$os->{arch}";
+
+    # We get the list of available OPKGs via the repositories
+    require OSCAR::ORM;
+    my @repos = OSCAR::ORM::get_default_repositories ();
+    my @opkgs;
+    foreach my $repo (@repos) {
+        my @pkgs = OSCAR::ORM::get_available_opkgs($repo);
+        foreach my $opkg (@pkgs) {
+            push (@opkgs, @pkgs);
+        }
+    }
+
+    # We get the list of OPKGs that are already in the package set
+    my @ps_opkgs = 
+        OSCAR::PackageSet::get_list_opkgs_in_package_set ($set, 
+                                                          $distro);
+
+    # We only add the OPKGs that are actually available via the repositories and
+    # not already in the package set.
+    my @opkgs_to_add;
+    my $o;
+    foreach $o (@ARGV) {
+        if (!OSCAR::Utils::is_element_in_array ($o, @opkgs)) {
+            OSCAR::Logger::oscar_log_subsection "[WARNING] OPKG $o is not ".
+                "available, not added to the package set";
+            next;
+        } 
+
+        if (OSCAR::Utils::is_element_in_array ($o, @ps_opkgs)) {
+            OSCAR::Logger::oscar_log_subsection "[WARNING] OPKG $o is already ".
+                "in the package set, we do not add it";
+            next;
+        }
+        
+        push (@opkgs_to_add, $o);
+    }
+
+    # Then we actually add the OPKGs
+    foreach $o (@opkgs_to_add) {
+        OSCAR::PackageSet::add_opkg_to_package_set ($set, $distro, $o);
+    }
+}
+
+if ($new) {
+    if (!OSCAR::Utils::is_a_valid_string ($new)) {
+        die "ERROR: Invalid package set";
+    }
+
+    my $os = OSCAR::OCA::OS_Detect::open();
+    if (!defined $os && ref($os) ne "HASH") {
+        die "ERROR: Unsupported distro";
+    }
+    my $distro = "$os->{compat_distro}-$os->{compat_distrover}-$os->{arch}";
+    OSCAR::PackageSet::new_package_set ($new, $distro);
+}
+
 EXIT_SUCCESS:
 $ENV{OSCAR_VERBOSE} = $initial_verbose_value;
 exit 0;
@@ -125,19 +200,45 @@ oscar-selector, a command line tool for OSCAR configuration.
 
 oscar-selector OPTIONS [ARGUMENTS]
 
-=head1 DESCRIPTION
-
 =head1 OPTIONS
 
 Recognized options include:
 
-=over 8
+=over 4
 
-=item --list | -l
+=item --list | -l [PACKAGE_SET_NAME]
+
+This command has two different behaviors. If no package set is specified, it 
+lists all the existing package sets; if a package set is specified, it lists the
+OSCAR packages that are included into the package set.
 
 =item --duplicate | -d
 
-    Duplicate an existing package set, the name of the new package set is the first argument of the command.
+Duplicate an existing package set, the name of the new package set is the 
+first argument of the command.
+
+=item --add-opkgs
+
+Add a list of OPKGs that are specified as command arguments. To get the list of
+available OPKGs, please, execute the "orm --default-opkgs --non-interactive"
+command. Must be used with the "--set" option (see below).
+
+=item --package-set | --set
+
+Specify the package set selected to perform an action. You can get the list of
+existing package set using the "--list" option.
+
+=item --new-set | --new SET_NAME
+
+Create a new package set. Core OSCAR packages are automatically added to the new
+package set.
+
+=back
+
+=head1 Known Limitations
+
+The oscar-selector script only works for the local distribution. It won't work
+for an image based on another Linux distribution.
 
 =cut
 

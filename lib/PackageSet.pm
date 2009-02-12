@@ -39,11 +39,13 @@ use Data::Dumper;
 use Carp;
 
 @EXPORT = qw(
+            add_opkg_to_package_set
             duplicate_package_set
             get_local_package_set_list
             get_list_opkgs_in_package_set
             get_package_sets
             get_opkgs_path_from_package_set
+            new_package_set
             );
 
 my $verbose = $ENV{OSCAR_VERBOSE};
@@ -205,6 +207,52 @@ sub get_list_opkgs_in_package_set ($$) {
     return @opkgs;
 }
 
+sub save_package_set ($$$) {
+    my ($set_name, $distro, $xml_data) = @_;
+
+    my $file = "$package_set_dir/$set_name/$distro.xml";
+    open (FILE, ">$file")
+        or (carp ("ERROR: impossible to open $file"), return -1);
+    print FILE "<?xml version=\"1.0\" encoding=\"ISO-8859-1\"?>\n";
+    print FILE "<package_set>\n";
+    print FILE "\t<name>$set_name</name>\n";
+    print FILE "\t<packages>\n";
+    my $base = $xml_data->{packages}->[0]->{opkg};
+    for (my $i=0; $i < scalar(@{$base}); $i++) {
+        my $opkg_name = $xml_data->{packages}->[0]->{opkg}->[$i];
+        print FILE "\t\t<opkg>$opkg_name</opkg>\n";
+    }
+    print FILE "\t</packages>\n";
+    print FILE "</package_set>\n";
+    close (FILE);
+
+    return 0;
+}
+
+sub add_opkg_to_package_set ($$$) {
+    my ($set_name, $distro, $opkg) = @_;
+
+    my $file_path = "$package_set_dir/$set_name/$distro.xml";
+    if ( ! -f $file_path) {
+        carp "ERROR: Impossible to read the package set ($file_path)";
+        return -1;
+    }
+
+    # XML files are a pain: we parse, we add the data, then we save... and for
+    # each step it is quite unreadable.
+    open (FILE, "$file_path") 
+        or (carp ("ERROR: impossible to open $file_path"), return -1);
+    my $simple= XML::Simple->new (ForceArray => 1);
+    my $xml_data = $simple->XMLin($file_path);
+    my $base = $xml_data->{packages}->[0]->{opkg};
+    my $list = $xml_data->{packages}->[0]->{opkg};
+    push (@$list, $opkg);
+    close (FILE);
+
+    save_package_set ($set_name, $distro, $xml_data);
+    return 0;
+}
+
 ###############################################################################
 # Give the set of OPKGs (with their full path) present in a specific package 
 # set.
@@ -254,3 +302,50 @@ sub get_opkgs_path_from_package_set ($) {
     print_array (@opkgs);
     return @opkgs;
 }
+
+sub create_empty_package_set ($$) {
+    my ($set, $distro) = @_;
+
+    my $file = "$package_set_dir/$set/$distro.xml";
+
+    open (FILE, ">$file")
+        or (carp ("ERROR: impossible to open $file"), return -1);
+    print FILE "<?xml version=\"1.0\" encoding=\"ISO-8859-1\"?>\n";
+    print FILE "<package_set>\n";
+    print FILE "\t<name>$set</name>\n";
+    print FILE "\t<packages>\n";
+    print FILE "\t</packages>\n";
+    print FILE "</package_set>\n";
+    close (FILE);
+
+    return 0;
+}
+
+sub new_package_set ($$) {
+    my ($set, $distro) = @_;
+
+    my $file = "$package_set_dir/$set/$distro.xml";
+    if (-f $file) {
+        OSCAR::Logger::oscar_log_subsection "Package set already exist ($set, ".
+            "distro";
+        return 0;
+    }
+
+    # All package sets should at least include the core OPKGs.
+    require OSCAR::Opkg;
+    my @core_opkgs = OSCAR::Opkg::get_list_core_opkgs();
+    if (create_empty_package_set ($set, $distro)) {
+        carp "ERROR: impossible to create an empty package set ($file)";
+        return -1;
+    }
+    foreach my $o (@core_opkgs) {
+        if (add_opkg_to_package_set ($set, $distro, $o)) {
+            carp "ERROR: Impossible to add $o to $set ($distro)";
+            return -1;
+        }
+    }
+
+    return 0;
+}
+
+1;
