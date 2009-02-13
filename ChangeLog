@@ -1,3 +1,6 @@
+1.1.1 (not yet released):
+- Remove debugging messages.
+
 1.1:
 - Move the PackageSet.pm Perl module from oscar-base to Selector.
 - Include a oscar-selector script that enables the management of package sets.

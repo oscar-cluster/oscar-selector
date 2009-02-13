@@ -67,7 +67,6 @@ if ($verbose) {
 if ($list) {
     my $set_name = $ARGV[0];
     if (OSCAR::Utils::is_a_valid_string ($set_name)) {
-        print "Toto: $set_name\n";
         require OSCAR::OCA::OS_Detect;
         my $os = OSCAR::OCA::OS_Detect::open();
         if (!defined $os && ref($os) ne "HASH") {
