@@ -190,12 +190,14 @@ sub get_list_opkgs_in_package_set ($$) {
     my $simple= XML::Simple->new (ForceArray => 1);
     my $xml_data = $simple->XMLin($file_path);
     my $base = $xml_data->{packages}->[0]->{opkg};
+    return undef if (!defined $base);
     print Dumper($xml_data) if $verbose;
     print "Number of OPKG in the $packageSetName package set: ".
           scalar(@{$base})."\n" if $verbose;
     for (my $i=0; $i < scalar(@{$base}); $i++) {
         my $opkg_name = $xml_data->{packages}->[0]->{opkg}->[$i];
-        push (@opkgs, $opkg_name);
+        next if (!OSCAR::Utils::is_a_valid_string ($opkg_name));
+        push (@opkgs, $opkg_name) 
     }
 
     if ($verbose) {
@@ -208,7 +210,8 @@ sub get_list_opkgs_in_package_set ($$) {
 }
 
 sub save_package_set ($$$) {
-    my ($set_name, $distro, $xml_data) = @_;
+    my ($set_name, $distro, $ref_list_opkgs) = @_;
+
 
     my $file = "$package_set_dir/$set_name/$distro.xml";
     open (FILE, ">$file")
@@ -217,10 +220,8 @@ sub save_package_set ($$$) {
     print FILE "<package_set>\n";
     print FILE "\t<name>$set_name</name>\n";
     print FILE "\t<packages>\n";
-    my $base = $xml_data->{packages}->[0]->{opkg};
-    for (my $i=0; $i < scalar(@{$base}); $i++) {
-        my $opkg_name = $xml_data->{packages}->[0]->{opkg}->[$i];
-        print FILE "\t\t<opkg>$opkg_name</opkg>\n";
+    foreach my $o (@$ref_list_opkgs) {
+        print FILE "\t\t<opkg>$o</opkg>\n";
     }
     print FILE "\t</packages>\n";
     print FILE "</package_set>\n";
@@ -238,18 +239,14 @@ sub add_opkg_to_package_set ($$$) {
         return -1;
     }
 
-    # XML files are a pain: we parse, we add the data, then we save... and for
-    # each step it is quite unreadable.
     open (FILE, "$file_path") 
         or (carp ("ERROR: impossible to open $file_path"), return -1);
-    my $simple= XML::Simple->new (ForceArray => 1);
-    my $xml_data = $simple->XMLin($file_path);
-    my $base = $xml_data->{packages}->[0]->{opkg};
-    my $list = $xml_data->{packages}->[0]->{opkg};
-    push (@$list, $opkg);
-    close (FILE);
-
-    save_package_set ($set_name, $distro, $xml_data);
+    my @opkgs = get_list_opkgs_in_package_set ($set_name, $distro);
+    push (@opkgs, $opkg);
+    if (save_package_set ($set_name, $distro, \@opkgs)) {
+        carp "ERROR: Impossible to save the package set ($set_name, $distro)";
+        return -1;
+    }
     return 0;
 }
 
@@ -329,6 +326,14 @@ sub new_package_set ($$) {
         OSCAR::Logger::oscar_log_subsection "Package set already exist ($set, ".
             "distro";
         return 0;
+    }
+
+    my $dest_dir = "$package_set_dir/$set";
+    if (! -d "$dest_dir") {
+        require File::Path;
+        File::Path::mkpath ($dest_dir)
+            or (carp "ERROR: Impossible to create the directory $dest_dir",
+                return -1);
     }
 
     # All package sets should at least include the core OPKGs.

@@ -1,6 +1,9 @@
 1.1.1 (not yet released):
 - Remove debugging messages.
 - Slightly improve the Makefile.
+- Fix a bug on some Linux distribution when saving package sets (the way XML
+files are parsed can be slightly different based on the local Linux
+distribution).
 
 1.1:
 - Move the PackageSet.pm Perl module from oscar-base to Selector.
