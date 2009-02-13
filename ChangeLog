@@ -1,5 +1,6 @@
 1.1.1 (not yet released):
 - Remove debugging messages.
+- Slightly improve the Makefile.
 
 1.1:
 - Move the PackageSet.pm Perl module from oscar-base to Selector.

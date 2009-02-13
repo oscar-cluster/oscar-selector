@@ -18,7 +18,7 @@ uninstall:
 
 clean:
 	@rm -f build-stamp configure-stamp
-	@rm -rf debian/$(PKG)
+	@rm -rf debian/$(PKG) debian/files debian/oscar-selector.debhelper.log
 	@rm -f $(PKG).tar.gz
 	@rm -f $(PKG).spec
 	for dir in ${SUBDIRS} ; do ( cd $$dir ; ${MAKE} clean ) ; done
