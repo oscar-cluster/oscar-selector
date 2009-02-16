@@ -1,23 +1,38 @@
-%define binpref /usr/bin
-%define libpref PERLLIBPATH
-%define manpref /usr/local/man/man1/
-%define bintarget $RPM_BUILD_ROOT%{binpref}
-%define libtarget $RPM_BUILD_ROOT%{libpref}
-%define mantarget $RPM_BUILD_ROOT%{manpref}
+%define version     1.1.1
+%define release     1
+
+%define binpref         /usr/bin
+%define libpref         PERLLIBPATH/OSCAR
+%define guilibpref      PERLLIBPATH/Qt
+%define manpref         /usr/local/man/man1/
+%define bintarget       $RPM_BUILD_ROOT%{binpref}
+%define libtarget       $RPM_BUILD_ROOT%{libpref}
+%define guilibtarget    $RPM_BUILD_ROOT%{guilibpref}
+%define mantarget       $RPM_BUILD_ROOT%{manpref}
 
 Summary:        OSCAR Package Selector.
 Name:           oscar-selector
-Version:        1.1.1
-Release:        1
+Version:        %{version}
+Release:        %{release}
 Vendor:         Open Cluster Group <http://OSCAR.OpenClusterGroup.org/>
 Distribution:   OSCAR
 Packager:       Geoffroy Vallee <valleegr@ornl.gov>
 License:        GPL
-Group:          Development/Libraries
+Group:          Applications/System
 Source:         %{name}.tar.gz
-BuildRoot:      %{_localstatedir}/tmp/%{name}-root
 BuildArch:      noarch
 AutoReqProv: 	no
+
+BuildRoot:      %{_localstatedir}/tmp/%{name}-root
+
+%package x11
+Summary:        OSCAR Package Selector Qt GUI
+Version:        %{version}
+Release:        %{release}
+License:        GPL
+Group:          Applications/System
+Requires:       perl-Qt
+BuildRoot:      %{_localstatedir}/tmp/%{name}-root
 
 %description
 Set of scripts and Perl modules for the selection of OSCAR package in order to set the software configuration of an OSCAR cluster.
@@ -26,7 +41,7 @@ Set of scripts and Perl modules for the selection of OSCAR package in order to s
 %setup -n %{name}
 
 %build
-make install DESTDIR=$RPM_BUILD_ROOT
+make install-cli DESTDIR=$RPM_BUILD_ROOT
 
 %install 
 
@@ -35,6 +50,10 @@ make install DESTDIR=$RPM_BUILD_ROOT
 %{binpref}/*
 %{libpref}/*
 %{manpref}/*
+
+%files
+%defattr(-,root,root)
+%{guilibpref}/*
 
 %changelog
 * Fri Feb 13 2009 Geoffroy Vallee <valleegr@ornl.gov> 1.1.1-1

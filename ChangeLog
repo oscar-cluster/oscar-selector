@@ -1,4 +1,7 @@
-1.1.1 (not yet released):
+1.1.2 (not yet released):
+- Reorganize the code to separate the GUI code.
+
+1.1.1:
 - Remove debugging messages.
 - Slightly improve the Makefile.
 - Fix a bug on some Linux distribution when saving package sets (the way XML

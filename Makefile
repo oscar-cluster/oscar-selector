@@ -5,13 +5,20 @@ PKG=oscar-selector
 
 include ./Config.mk
 
-SUBDIRS := bin lib doc
+BACKEND_SUBDIRS := bin doc
+SUBDIRS := lib
 
 all:
 	for dir in ${SUBDIRS} ; do ( cd $$dir ; ${MAKE} all ) ; done
 
-install:
-	for dir in ${SUBDIRS} ; do ( cd $$dir ; ${MAKE} install ) ; done
+install-cli:
+	for dir in ${BACKEND_SUBDIRS} ; do ( cd $$dir ; ${MAKE} install ) ; done
+	for dir in ${SUBDIRS} ; do ( cd $$dir ; ${MAKE} install-backend ) ; done
+
+install-gui:
+	for dir in ${SUBDIRS} ; do ( cd $$dir ; ${MAKE} install-gui ) ; done
+
+install: install-cli install-gui
 
 uninstall:
 	for dir in ${SUBDIRS} ; do ( cd $$dir ; ${MAKE} uninstall ) ; done
