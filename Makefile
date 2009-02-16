@@ -5,30 +5,35 @@ PKG=oscar-selector
 
 include ./Config.mk
 
-BACKEND_SUBDIRS := bin doc
-SUBDIRS := lib
+BACKEND_SUBDIRS := bin doc lib
+GUI_SUBDIRS := ui
 
 all:
-	for dir in ${SUBDIRS} ; do ( cd $$dir ; ${MAKE} all ) ; done
+	for dir in ${BACKEND_SUBDIRS} ; do ( cd $$dir ; ${MAKE} all ) ; done
+	for dir in ${GUI_SUBDIRS} ; do ( cd $$dir ; ${MAKE} all ) ; done
 
 install-cli:
 	for dir in ${BACKEND_SUBDIRS} ; do ( cd $$dir ; ${MAKE} install ) ; done
-	for dir in ${SUBDIRS} ; do ( cd $$dir ; ${MAKE} install-backend ) ; done
 
 install-gui:
-	for dir in ${SUBDIRS} ; do ( cd $$dir ; ${MAKE} install-gui ) ; done
+	for dir in ${GUI_SUBDIRS} ; do ( cd $$dir ; ${MAKE} install ) ; done
 
 install: install-cli install-gui
 
-uninstall:
-	for dir in ${SUBDIRS} ; do ( cd $$dir ; ${MAKE} uninstall ) ; done
+uninstall-gui:
+	for dir in ${GUI_SUBDIRS} ; do ( cd $$dir ; ${MAKE} uninstall ) ; done
+
+uninstall-cli:
+	for dir in ${BACKEND_SUBDIRS} ; do ( cd $$dir ; ${MAKE} uninstall ) ; done
 
 clean:
 	@rm -f build-stamp configure-stamp
-	@rm -rf debian/$(PKG) debian/files debian/oscar-selector.debhelper.log
+	@rm -rf debian/$(PKG) debian/$(PKG)-x11
+	@rm -f debian/files debian/oscar-selector.debhelper.log
 	@rm -f $(PKG).tar.gz
 	@rm -f $(PKG).spec
-	for dir in ${SUBDIRS} ; do ( cd $$dir ; ${MAKE} clean ) ; done
+	for dir in ${BACKEND_SUBDIRS} ; do ( cd $$dir ; ${MAKE} clean ) ; done
+	for dir in ${GUI_SUBDIRS} ; do ( cd $$dir ; ${MAKE} clean ) ; done
 
 dist: clean
 	@rm -rf /tmp/$(PKG)
