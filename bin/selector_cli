@@ -70,7 +70,10 @@ my $selected_group;
 #Get a list of all the packages
 my $allPackages = SelectorUtils::getAllPackages();
 
-my $success = OSCAR::Database::get_groups_for_packages(\@groups_list);
+my $success = OSCAR::Database::get_groups_for_packages(\@groups_list, 
+                                                       undef,
+                                                       undef,
+                                                       undef);
 
 foreach my $groups_ref (@groups_list) {
     push @package_sets, $$groups_ref{group_name};
@@ -173,6 +176,7 @@ sub printPackages
                 $printStatus = $$allPackages{$package}{status};
                 $printPackage = $package;
                 $printClass = $$allPackages{$package}{__class};
+                $printClass = "" if !defined $printClass;
                 $printVersion = $$allPackages{$package}{version};
                 
                 #Print out the information
@@ -192,6 +196,7 @@ sub printPackages
                 $printStatus = $$allPackages{$package}{status};
                 $printPackage = $package;
                 $printClass = $$allPackages{$package}{__class};
+                $printClass = "" if !defined $printClass;
                 $printVersion = $$allPackages{$package}{version};
                 
                 #Print out the information
@@ -211,6 +216,7 @@ sub printPackages
                 $printStatus = $$allPackages{$package}{status};
                 $printPackage = $package;
                 $printClass = $$allPackages{$package}{__class};
+                $printClass = "" if !defined $printClass;
                 $printVersion = $$allPackages{$package}{version};
                 
                 #Print out the information
@@ -228,6 +234,7 @@ sub printPackages
             $printStatus = $$allPackages{$package}{status};
             $printPackage = $package;
             $printClass = $$allPackages{$package}{__class};
+            $printClass = "" if !defined $printClass;
             $printVersion = $$allPackages{$package}{version};
             
             #Print out the information
