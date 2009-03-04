@@ -1,7 +1,6 @@
 #########################################################################
 #  File  : SelectorTable.pm                                             #
-#  Author: Terrence G. Fleury (tfleury@ncsa.uiuc.edu)                   #
-#  Date  : April 24, 2003                                               #
+#  Authors: Terrence G. Fleury (tfleury@ncsa.uiuc.edu)                  #
 #  This perl package is a subclass of a Qt QTable.  I had to subclass   #
 #  QTable (rather than add a basic QTable in Designer) since I needed   #
 #  control over the checkboxes and the sorting method.                  #
@@ -20,13 +19,13 @@
 #  along with this program; if not, write to the Free Software
 #  Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307 USA
 #
-#  Copyright (c) 2003 The Board of Trustees of the University of Illinois.
-#                     All rights reserved.
-#  Copyright (c) 2005 The Trustees of Indiana University.  
-#                     All rights reserved.
-#  Copyright (c) 2007 Geoffroy Vallee <valleegr@ornl.gov>
-#                     Oak Ridge National Laboratory
-#                     All rights reserved.
+#  Copyright (c) 2003      The Board of Trustees of the University of Illinois.
+#                          All rights reserved.
+#  Copyright (c) 2005      The Trustees of Indiana University.  
+#                          All rights reserved.
+#  Copyright (c) 2007-2009 Geoffroy Vallee <valleegr@ornl.gov>
+#                          Oak Ridge National Laboratory
+#                          All rights reserved.
 #
 # $Id$
 #########################################################################
@@ -34,10 +33,10 @@
 use strict;
 use utf8;
 
-package SelectorTable;
+package Qt::SelectorTable;
 use Qt;
-use SelectorTableItem;
-use SelectorCheckTableItem;
+use Qt::SelectorTableItem;
+use Qt::SelectorCheckTableItem;
 use Qt::isa qw(Qt::Table);
 use Qt::slots
     populateTable => [ 'const QString&' ],
@@ -60,6 +59,8 @@ my $currSet;                # The name of the currently selected Package Set
 my $packagesInstalled;      # Hash of packages with 'installed' bit set to 1
 my $foundPackagesInstalled; # Has the above hash been calculated once?
 my %scope = ();
+
+use vars qw ($last_ps);
 
 sub NEW
 {
@@ -87,7 +88,7 @@ sub NEW
   horizontalHeader()->setLabel(1,"");
   horizontalHeader()->setLabel(2,"Package Name");
   horizontalHeader()->setLabel(3,"Class");
-  horizontalHeader()->setLabel(4,"Location/Version");
+  horizontalHeader()->setLabel(4,"Version");
   hideColumn(0);
   setShowGrid(0);
   verticalHeader()->hide();   # Get rid of the numbers along the left side
@@ -175,79 +176,79 @@ sub sortColumn
 }
 
 # DEPRECATED??
-sub getPackagesInPackageSet
-{
-#########################################################################
-#  Subroutine: getPackagesInPackageSet                                  #
-#  Parameter : Name of a package set.                                   #
-#  Returns   : A hash reference containing which packages are (set) in  #
-#              that package set.                                        #
-#  Call this subroutine when you need to find out which packages are    #
-#  "selected" in a given package set.  The results are returned in a    #
-#  hash references with the keys being the (short) names of the         #
-#  packages and the values are '1's for those packages.  So you will    #
-#  need to do a "if (defined $href->{$package})" to find out if the     #
-#  $package is in the package set.                                      #
-#########################################################################
-# !!WARNING!! This is not the final code. Currently we do not use the
-# database which is only a temporary solution.
-#########################################################################
-  
-    my $packageSet = shift;
-
-    # Get the list of packages in the given package set and create a
-    # hash where the keys are the (short) names of the packages and the
-    # values are "1"s for those packages.
-    my @packagesInSet;
-    my %packagesInSet;
-    my $success = OSCAR::Database::get_selected_group_packages(
-        \@packagesInSet, \%options, \@errors, $packageSet, undef);
-#    @packagesInSet = get_list_opkgs_in_package_set($packageSet);
-
-
-    foreach my $pack_ref (@packagesInSet) {
-        $packagesInSet{$$pack_ref{package}} = 1;
-    }
-
-    return \%packagesInSet;
-}
-
-sub getPackagesInstalled
-{
-#########################################################################
-#  Subroutine: getPackagesInstalled                                     #
-#  Parameters: None                                                     #
-#  Returns   : A hash reference containing which packages are currently #
-#              installed (according to their 'installed' bit.           #
-#  Call this subroutine when you need to find out which packages are    #
-#  "installed".  The results are returned in a hash references with     #
-#  the keys being the (short) names of the packages and the values      #
-#  are '1's for those packages which are installed.  So you will        #
-#  need to do a "if (defined $href->{$package})" to find out if the     #
-#  $package is installed.                                               #
-#########################################################################
-
-  if (!$foundPackagesInstalled)
-    { # Really only need to call once per run
-      $foundPackagesInstalled = 1;
-      # Get the list of packages installed and create a hash where the keys 
-      # are the (short) names of the packages and the values are "1"s for 
-      # those packages.
-      my @packagesInstalled;
-      my $success = OSCAR::Database::get_node_package_status_with_node(
-          "oscar_server",\@packagesInstalled,\%options,\@errors, 8 );
-      if ($success)
-        { # Transform the array of installed packages into a hash
-          foreach my $pack_ref (@packagesInstalled)
-            {
-              my $pack = $$pack_ref{package};
-              $packagesInstalled->{$pack} = 1;
-            }
-        }
-    }
-
-  return $packagesInstalled;
-}
+# sub getPackagesInPackageSet
+# {
+# #########################################################################
+# #  Subroutine: getPackagesInPackageSet                                  #
+# #  Parameter : Name of a package set.                                   #
+# #  Returns   : A hash reference containing which packages are (set) in  #
+# #              that package set.                                        #
+# #  Call this subroutine when you need to find out which packages are    #
+# #  "selected" in a given package set.  The results are returned in a    #
+# #  hash references with the keys being the (short) names of the         #
+# #  packages and the values are '1's for those packages.  So you will    #
+# #  need to do a "if (defined $href->{$package})" to find out if the     #
+# #  $package is in the package set.                                      #
+# #########################################################################
+# # !!WARNING!! This is not the final code. Currently we do not use the
+# # database which is only a temporary solution.
+# #########################################################################
+#   
+#     my $packageSet = shift;
+# 
+#     # Get the list of packages in the given package set and create a
+#     # hash where the keys are the (short) names of the packages and the
+#     # values are "1"s for those packages.
+#     my @packagesInSet;
+#     my %packagesInSet;
+#     my $success = OSCAR::Database::get_selected_group_packages(
+#         \@packagesInSet, \%options, \@errors, $packageSet, undef);
+# #    @packagesInSet = get_list_opkgs_in_package_set($packageSet);
+# 
+# 
+#     foreach my $pack_ref (@packagesInSet) {
+#         $packagesInSet{$$pack_ref{package}} = 1;
+#     }
+# 
+#     return \%packagesInSet;
+# }
+# 
+# sub getPackagesInstalled
+# {
+# #########################################################################
+# #  Subroutine: getPackagesInstalled                                     #
+# #  Parameters: None                                                     #
+# #  Returns   : A hash reference containing which packages are currently #
+# #              installed (according to their 'installed' bit.           #
+# #  Call this subroutine when you need to find out which packages are    #
+# #  "installed".  The results are returned in a hash references with     #
+# #  the keys being the (short) names of the packages and the values      #
+# #  are '1's for those packages which are installed.  So you will        #
+# #  need to do a "if (defined $href->{$package})" to find out if the     #
+# #  $package is installed.                                               #
+# #########################################################################
+# 
+#   if (!$foundPackagesInstalled)
+#     { # Really only need to call once per run
+#       $foundPackagesInstalled = 1;
+#       # Get the list of packages installed and create a hash where the keys 
+#       # are the (short) names of the packages and the values are "1"s for 
+#       # those packages.
+#       my @packagesInstalled;
+#       my $success = OSCAR::Database::get_node_package_status_with_node(
+#           "oscar_server",\@packagesInstalled,\%options,\@errors, 8 );
+#       if ($success)
+#         { # Transform the array of installed packages into a hash
+#           foreach my $pack_ref (@packagesInstalled)
+#             {
+#               my $pack = $$pack_ref{package};
+#               $packagesInstalled->{$pack} = 1;
+#             }
+#         }
+#     }
+# 
+#   return $packagesInstalled;
+# }
 
 #########################################################################
 #  Subroutine: populateTable                                            #
@@ -266,35 +267,27 @@ sub populateTable ($) {
     $currSet = shift;    # The package set selected in the ComboBox
     my $success;         # Return result for database commands
 
+    print STDERR "Current set: $currSet\n";
+    print STDERR "Last set: $last_ps\n" if defined $last_ps;
+
     # If the selection is empty (it happens when Selector runs for the first
     # time), we just exit (thus the window appears quickly, especially if remote
     # repositories are used).
-    return if ($currSet eq "");
+    if ($currSet eq "") {
+        return;
+    }
 
-    # Check to see if we have already built the table or not.
-    if (!$tablePopulated) {
-        $tablePopulated = 1;  # So we add stuff to the cells only once
+    # Check if we really need to update the table.
+    if (!defined $last_ps || $last_ps ne $currSet) {
+        $last_ps = $currSet;
 
         # We get the list of OPKGs in the package set
-        my $os = OSCAR::OCA::OS_Detect::open();
-        if (!defined $os) {
-            carp "ERROR: Impossible to detect the local distribution";
-            return -1;
-        }
-        my $distro_id = 
-            "$os->{'compat_distro'}-$os->{'compat_distrover'}-$os->{'arch'}";
+        require OSCAR::PackagePath;
+        my $distro = OSCAR::PackagePath::get_distro ();
+        my $compat_distro = OSCAR::PackagePath::get_compat_distro ($distro);
         my @available_opkgs
             = OSCAR::PackageSet::get_list_opkgs_in_package_set ($currSet,
-                                                                $distro_id);
-
-        # We get available data about those packages from ODA
-        my @opkgs_data;
-        my %options = (debug => 0);
-        if (OSCAR::Database::get_packages (\@opkgs_data, \%options, undef,
-                                       distro => '$distro_id') != 1) {
-            carp "ERROR: Impossible to get OPKGs data for $distro_id";
-            return undef;
-        }
+                                                                $compat_distro);
 
         # We get the current selection
         my %selection_data 
@@ -303,7 +296,11 @@ sub populateTable ($) {
         my $rownum = 0;
 
         my ($location, $version);
+        require OSCAR::RepositoryManager;
         foreach my $opkg (@available_opkgs) {
+            my $rm = OSCAR::RepositoryManager->new (distro=>$distro);
+            my ($rc, %opkg_data) = $rm->show_opkg ("opkg-$opkg");
+
             setNumRows($rownum+1); 
 
             # Column 0 contains "short" names of packages
@@ -335,12 +332,8 @@ sub populateTable ($) {
             setItem($rownum,3,$item);
 
             # Column 4 contains the Location + Version
-            foreach my $opkg_ref (@opkgs_data) { # We look for the OPKG
-                if ($$opkg_ref{package} eq $opkg) {
-                    $location = $$opkg_ref{repository};
-                    $version = $$opkg_ref{version};
-                }
-            }
+            $location = $opkg_data{"opkg-$opkg"}{repository};
+            $version = $opkg_data{"opkg-$opkg"}{version};
             $item = SelectorTableItem(this,Qt::TableItem::Never(),
                                       $location . " " . $version);
             setItem($rownum,4,$item);
@@ -359,26 +352,26 @@ sub populateTable ($) {
     return 0;
 }
 
-sub isPackageInPackageSet
-{
-#########################################################################
-#  Subroutine: isPackageInPackageSet                                    #
-#  Parameter : (1) The package we are looking for                       #
-#              (2) The package set we are checking                      #
-#  Returns   : 1 if the package is in the package set, 0 otherwise      #
-#  This function takes in the (short) name of a package and the name    #
-#  of a package set.  It returns 1 (true) if the package is in that     #
-#  package set.                                                         #
-#########################################################################
-
-  my $package = shift;
-  my $packageSet = shift;
-  my $packagesInSet;
-
-  $packagesInSet = getPackagesInPackageSet($packageSet);
-  return ((defined $packagesInSet->{$package}) &&
-          ($packagesInSet->{$package} == 1));
-}
+# sub isPackageInPackageSet
+# {
+# #########################################################################
+# #  Subroutine: isPackageInPackageSet                                    #
+# #  Parameter : (1) The package we are looking for                       #
+# #              (2) The package set we are checking                      #
+# #  Returns   : 1 if the package is in the package set, 0 otherwise      #
+# #  This function takes in the (short) name of a package and the name    #
+# #  of a package set.  It returns 1 (true) if the package is in that     #
+# #  package set.                                                         #
+# #########################################################################
+# 
+#   my $package = shift;
+#   my $packageSet = shift;
+#   my $packagesInSet;
+# 
+#   $packagesInSet = getPackagesInPackageSet($packageSet);
+#   return ((defined $packagesInSet->{$package}) &&
+#           ($packagesInSet->{$package} == 1));
+# }
 
 sub setCheckBoxForPackage
 {

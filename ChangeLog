@@ -1,5 +1,8 @@
-1.1.2 (not yet released):
+1.2 (not yet released):
 - Reorganize the code to separate the GUI code.
+- Merge the oscar-selector and selector_cli scripts.
+- Full support package selection/unselection and package set management via
+the CLI.
 
 1.1.1:
 - Remove debugging messages.

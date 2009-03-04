@@ -3,7 +3,7 @@ DESTDIR=
 TOPDIR=..
 include $(TOPDIR)/Config.mk
 
-FILES := PackageSet.pm
+FILES := PackageSet.pm SelectorCommon.pm
 SUBDIRS := 
 
 all:

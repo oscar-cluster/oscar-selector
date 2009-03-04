@@ -27,7 +27,7 @@
 use strict;
 use utf8;
 
-package SelectorCheckTableItem;
+package Qt::SelectorCheckTableItem;
 use Qt;
 use Qt::isa qw(Qt::CheckTableItem);
 use Qt::slots

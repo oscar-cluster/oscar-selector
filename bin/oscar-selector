@@ -19,7 +19,12 @@ use strict;
 use Carp;
 use Cwd qw(chdir cwd);
 use Getopt::Long;
+use Term::Complete;
+
+use OSCAR::Database;
 use OSCAR::PackageSet;
+use OSCAR::PackagePath;
+use OSCAR::SelectorCommon;
 use OSCAR::Utils;
 use warnings "all";
 
@@ -29,15 +34,26 @@ BEGIN {
     }
 }
 
-my ($verbose, $debug, $list, $duplicate, $add_opkgs, $set, $new);
+my ($verbose, $debug, $list, $duplicate, $add_opkgs, $set, $new, $interactive);
+
+use vars qw ($current_package_set);
+
+# Command line arguement variables for the interactive mode.
+my $file = '';
+my $inun = 0;
+my $help = '';
 
 GetOptions(
         "duplicate|d=s"                 => \$duplicate,
+        "interactive"                   => \$interactive,
         "list|l"                        => \$list,
         "add-opkgs"                     => \$add_opkgs,
         "package-set|set=s"             => \$set,
         "new-set|new=s"                 => \$new,
         "debug"                         => \$debug,
+        'm'                             => \$inun,
+        'filename=s'                    => \$file,
+        'f=s'                           => \$file,
         "verbose"                       => \$verbose,
         "help"                          => \&help,
         ) || help_and_exit();
@@ -55,6 +71,46 @@ sub help_and_exit {
     exit 1;
 }
 
+sub interactive_selector {
+    my @groups_list;
+    my @package_sets = OSCAR::PackageSet::get_package_sets();
+    my $selected_group;
+
+    # Currently we only deal with the Default package set
+    my $selected_package_set = "Default";
+
+    #Get a list of all the packages
+    my $distro = OSCAR::PackagePath::get_distro();
+    if (!defined $distro) {
+        die "ERROR: Impossible to get the local distro ID";
+    }
+    my $compat_distro = OSCAR::PackagePath::get_compat_distro ($distro);
+    my @opkgs = 
+        OSCAR::PackageSet::get_list_opkgs_in_package_set($selected_package_set,
+                                                        $compat_distro);
+
+    #List the packages and start getting input
+    #Print the packages before giving a prompt
+#     OSCAR::SelectorCommon::printPackages("all", $selected_package_set);
+
+
+    #Start the prompt section
+    #This will exit by the user typing 'quit'
+    my $log_path = "/var/log/oscar/selector_cli.log";
+    OSCAR::Logger::init_log_file ($log_path);
+    my $continue = 1;
+    my @completion_list = qw ( select unselect list file help quit exit );
+    my $prompt = "\nselector> ";
+
+    while($continue)
+    {
+        my $response = Complete($prompt, @completion_list);
+        $continue = OSCAR::SelectorCommon::processInput(\$current_package_set,
+                                                        $response);
+    }
+    return 0;
+}
+
 my $initial_verbose_value = 0;
 $initial_verbose_value = $ENV{OSCAR_VERBOSE} if (defined $ENV{OSCAR_VERBOSE});
 if ($debug) {
@@ -62,6 +118,29 @@ if ($debug) {
 }
 if ($verbose) {
     $ENV{OSCAR_VERBOSE} = 5;
+}
+
+if ($interactive) {
+    interactive_selector ();
+    exit 0;
+}
+
+if ($file) {
+    my $distro = OSCAR::PackagePath::get_distro();
+    my $compat_distro = OSCAR::PackagePath::get_compat_distro ($distro);
+    my @opkgs
+        = OSCAR::PackageSet::get_list_opkgs_in_package_set($selected_packages,
+                                                           $compat_distro); 
+
+    # If the user doesn't want to maintain the package state, 
+    # reset all core and included packages to selected and others to unselected 
+    if($inun == 1) { 
+        foreach my $pack (@opkgs) { 
+            OSCAR::SelectorCommon::processInput("select -q $pack");
+        }
+    }
+    OSCAR::SelectorCommon::processInput("file " . $file);
+    OSCAR::SelectorCommon::processInput("quit");
 }
 
 if ($list) {
@@ -161,7 +240,7 @@ if ($add_opkgs) {
                 "in the package set, we do not add it";
             next;
         }
-        
+
         push (@opkgs_to_add, $o);
     }
 
@@ -199,9 +278,11 @@ oscar-selector, a command line tool for OSCAR configuration.
 
 oscar-selector OPTIONS [ARGUMENTS]
 
-=head1 OPTIONS
+Two sets of capabilities are available: one for the management of package sets and one for the actual selection of OSCAR packages within a package set.
 
-Recognized options include:
+=head1 Package Set Management
+
+Recognized options for the management of package sers include:
 
 =over 4
 
@@ -233,6 +314,21 @@ Create a new package set. Core OSCAR packages are automatically added to the new
 package set.
 
 =back
+
+=head1 Package Selection
+
+Two modes are available for the selection/unselection of OSCAR packages within
+a given package set: (i) the interactive mode, (ii) act based on a input file.
+
+=head2 Interactive Mode
+
+To use oscar-selector in interactive mode, simply use the --interactive option.
+While in interactive mode, users can execute the help command at any time.
+
+=head2 Mode Based on a Input File
+
+To drive oscar-selector based on a input file, simply use the --file or -f
+option followed by the path to the input file.
 
 =head1 Known Limitations
 

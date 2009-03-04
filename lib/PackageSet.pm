@@ -1,6 +1,6 @@
 package OSCAR::PackageSet;
 #
-# Copyright (c) 2007-2008 Geoffroy Vallee <valleegr@ornl.gov>
+# Copyright (c) 2007-2009 Geoffroy Vallee <valleegr@ornl.gov>
 #                         Oak Ridge National Laboratory
 #                         All rights reserved.
 #
@@ -354,3 +354,34 @@ sub new_package_set ($$) {
 }
 
 1;
+
+__END__
+
+=head1 Name
+
+PackageSet - A set of functions for the management of package sets in OSCAR.
+
+=head1 Exported Functions
+
+=over 4
+
+=item add_opkg_to_package_set
+
+=item duplicate_package_set
+
+=item get_local_package_set_list
+
+=item get_list_opkgs_in_package_set
+
+Example: my @opkgs = get_list_opkgs_in_package_set ("Default", "debian-4-x86_64");
+
+=item get_package_sets
+
+=item get_opkgs_path_from_package_set
+
+=item new_package_set
+
+=back
+
+
+=cut

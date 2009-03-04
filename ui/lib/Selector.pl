@@ -20,7 +20,7 @@ use utf8;
 
 package Selector;
 use Qt;
-use SelectorTable;
+use Qt::SelectorTable;
 use lib "$ENV{OSCAR_HOME}/lib";
 use OSCAR::Opkg;
 use OSCAR::ODA_Defs;
@@ -31,7 +31,7 @@ use Qt::slots
     parseCommandLine => [],
     refreshPackageSetComboBox => [],
     aboutButton_clicked => [],
-    manageSetsButton_clicked => [],
+#    manageSetsButton_clicked => [],
     exitButton_clicked => [],
     cancelButton_clicked => [],
     updateTextBox => [],
@@ -282,7 +282,7 @@ sub NEW
 
     Qt::Object::connect(exitButton, SIGNAL "clicked()", this, SLOT "exitButton_clicked()");
     Qt::Object::connect(aboutButton, SIGNAL "clicked()", this, SLOT "aboutButton_clicked()");
-    Qt::Object::connect(manageSetsButton, SIGNAL "clicked()", this, SLOT "manageSetsButton_clicked()");
+#    Qt::Object::connect(manageSetsButton, SIGNAL "clicked()", this, SLOT "manageSetsButton_clicked()");
     Qt::Object::connect(cancelButton, SIGNAL "clicked()", this, SLOT "cancelButton_clicked()");
 
     setTabOrder(aboutButton, packageSetComboBox);

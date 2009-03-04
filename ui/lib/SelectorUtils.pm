@@ -30,20 +30,21 @@
 # $Id$
 #########################################################################
 
+BEGIN {
+    if (defined $ENV{OSCAR_HOME}) {
+        unshift @INC, "$ENV{OSCAR_HOME}/lib";
+    }
+}
+
 use strict;
 use utf8;
 
 package SelectorUtils;
 
 use Qt;
-
-use lib "$ENV{OSCAR_HOME}/lib";
 use OSCAR::Database;
 use OSCAR::OpkgDB;
 use OSCAR::OCA::OS_Detect;
-use OSCAR::PackageSet qw (
-                         get_local_package_set_list
-                         );
 use Data::Dumper;
 use Carp;
 
@@ -123,6 +124,7 @@ sub addTypeNameFieldToPackage
 #     Packager Name  {packager_name}   Name(s) of packager              #
 #     Packager Email {packager_email}  Email address(es) of packager(s) #
 #########################################################################
+# TODO: That should not be in a GUI dependent Perl module.
 sub getAllPackages () {
 
   # If this function has been called once, then it should have already
