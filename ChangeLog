@@ -1,4 +1,5 @@
 1.2 (not yet released):
+- Add dependency requirement for binary package creation (build.cfg).
 - Reorganize the code to separate the GUI code.
 - Merge the oscar-selector and selector_cli scripts.
 - Full support package selection/unselection and package set management via
