@@ -7,12 +7,9 @@
 # been lost, therefore we directly modify this file.
 #
 
-
+package SelectorAbout;
 use strict;
 use utf8;
-
-
-package SelectorAbout;
 use Qt;
 use Qt::isa qw(Qt::Dialog);
 use Qt::slots
@@ -26,7 +23,7 @@ use Qt::attributes qw(
     urlButton_font
 );
 
-use SelectorImages;
+use Qt::SelectorImages;
 
 sub uic_load_pixmap_SelectorAbout
 {

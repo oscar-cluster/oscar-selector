@@ -41,6 +41,7 @@ use Qt::isa qw(Qt::Table);
 use Qt::slots
     populateTable => [ 'const QString&' ],
     cellValueChanged => [ 'int', 'int' ];
+use Qt::signals deactivate_package_set_combo => [];
 
 # use lib "$ENV{OSCAR_HOME}/lib";
 use OSCAR::Database;
@@ -263,8 +264,9 @@ sub sortColumn
 #  "activated" signal so that when a new package set is chosen, the     #
 #  checkbox info is updated appropriately.                              #
 #########################################################################
-sub populateTable ($) {
+sub populateTable ($$) {
     $currSet = shift;    # The package set selected in the ComboBox
+    my $packageSetComboBox = shift;
     my $success;         # Return result for database commands
 
     print STDERR "Current set: $currSet\n";
@@ -275,6 +277,13 @@ sub populateTable ($) {
     # repositories are used).
     if ($currSet eq "") {
         return;
+    }
+
+    # We currently do not allow the consecutive selection of different package
+    # sets because of a bug in the refreshing of few widgets.
+    if (defined $last_ps) {
+        print STDERR "Deactivating the package set selection combox\n";
+        emit deactivate_package_set_combo();
     }
 
     # Check if we really need to update the table.
@@ -349,6 +358,10 @@ sub populateTable ($) {
         adjustColumn(2);
     }
 
+    if (defined $last_ps) {
+        print STDERR "Deactivating the package set selection combox\n";
+        emit deactivate_package_set_combo();
+    }
     return 0;
 }
 

@@ -129,7 +129,7 @@ if ($file) {
     my $distro = OSCAR::PackagePath::get_distro();
     my $compat_distro = OSCAR::PackagePath::get_compat_distro ($distro);
     my @opkgs
-        = OSCAR::PackageSet::get_list_opkgs_in_package_set($selected_packages,
+        = OSCAR::PackageSet::get_list_opkgs_in_package_set($current_package_set,
                                                            $compat_distro); 
 
     # If the user doesn't want to maintain the package state, 

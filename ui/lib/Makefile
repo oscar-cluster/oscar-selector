@@ -20,3 +20,4 @@ uninstall:
 	for dir in ${SUBDIRS} ; do ( cd $$dir ; ${MAKE} uninstall ) ; done
 
 clean:
+	rm -f *~

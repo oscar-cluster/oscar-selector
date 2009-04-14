@@ -35,7 +35,8 @@ use Qt::slots
     exitButton_clicked => [],
     cancelButton_clicked => [],
     updateTextBox => [],
-    rowSelectionChanged => [];
+    rowSelectionChanged => [],
+    do_deactivate_package_set_combo => [];
 use Qt::attributes qw(
     titleLabel
     titleLabel_font
@@ -67,13 +68,15 @@ use Qt::attributes qw(
     nextButton_font
     menubar
 );
+#use Qt::signals deactivate_package_set_combo => [];
 
 use SelectorUtils;
 use Qt::attributes qw( aboutForm manageSetsForm installuninstall );
 use SelectorManageSets;
 use SelectorImages;
 use SelectorAbout;
-use lib "$ENV{OSCAR_HOME}/lib"; use OSCAR::Database;
+use lib "$ENV{OSCAR_HOME}/lib"; 
+use OSCAR::Database;
 use Getopt::Long;
 use Carp;
 
@@ -106,6 +109,7 @@ sub NEW
         setName("Selector");
     }
     resize(621,493);
+    print STDERR "Setting caption...\n" if $options{debug};
     setCaption(trUtf8("OSCAR Package Selector"));
 
     setCentralWidget(Qt::Widget(this, "qt_central_widget"));
@@ -117,6 +121,7 @@ sub NEW
 
     my $Layout14 = Qt::VBoxLayout(undef, 0, 6, '$Layout14');
 
+    print STDERR "Setting title label...\n" if $options{debug};
     titleLabel = Qt::Label(centralWidget(), "titleLabel");
     titleLabel->setSizePolicy(Qt::SizePolicy(7, 5, 0, 0, titleLabel->sizePolicy()->hasHeightForWidth()));
     titleLabel_font = Qt::Font(titleLabel->font);
@@ -133,6 +138,7 @@ sub NEW
 
     my $Layout13 = Qt::HBoxLayout(undef, 0, 6, '$Layout13');
 
+    print STDERR "Setting the package set label...\n" if $options{debug};
     packLabel = Qt::Label(centralWidget(), "packLabel");
     packLabel->setSizePolicy(Qt::SizePolicy(4, 5, 0, 0, packLabel->sizePolicy()->hasHeightForWidth()));
     packLabel_font = Qt::Font(packLabel->font);
@@ -143,6 +149,7 @@ sub NEW
     packLabel->setText(trUtf8("Package Set:"));
     $Layout13->addWidget(packLabel);
 
+    print STDERR "Setting the package set combo...\n" if $options{debug};
     packageSetComboBox = Qt::ComboBox(0, centralWidget(), "packageSetComboBox");
     packageSetComboBox->setSizePolicy(Qt::SizePolicy(3, 5, 0, 0, packageSetComboBox->sizePolicy()->hasHeightForWidth()));
     packageSetComboBox->setPaletteForegroundColor(Qt::Color(0, 85, 255));
@@ -161,42 +168,54 @@ sub NEW
     $Layout14->addLayout($Layout13);
     $Layout19->addLayout($Layout14);
 
-    aboutButton = Qt::PushButton(centralWidget(), "aboutButton");
-    aboutButton->setSizePolicy(Qt::SizePolicy(0, 0, 0, 0, aboutButton->sizePolicy()->hasHeightForWidth()));
-    aboutButton->setText(trUtf8(""));
-    aboutButton->setPixmap(uic_load_pixmap_Selector("oscarsmall.png"));
-    aboutButton->setFlat(1);
-    Qt::ToolTip::add(aboutButton, trUtf8("View information about OSCAR"));
-    $Layout19->addWidget(aboutButton);
+#    print STDERR "Setting the about button...\n" if $options{debug};
+#    aboutButton = Qt::PushButton(centralWidget(), "aboutButton");
+#    aboutButton->setSizePolicy(Qt::SizePolicy(0, 0, 0, 0, aboutButton->sizePolicy()->hasHeightForWidth()));
+#    aboutButton->setText(trUtf8(""));
+    # GV (2009/04/13): the following line creates issues with some version of
+    # Perl-Qt
+#    aboutButton->setPixmap(uic_load_pixmap_Selector("oscarsmall.png"));
+#    aboutButton->setFlat(1);
+#    Qt::ToolTip::add(aboutButton, trUtf8("View information about OSCAR"));
+#    $Layout19->addWidget(aboutButton);
     $layout19->addLayout($Layout19);
 
+    print STDERR "Setting the package table...\n" if $options{debug};
+#    Qt::Object::connect(packageTable, SIGNAL 'deactivate_package_set_combo()',
+#                        this, SLOT 'do_deactivate_package_set_combo()');
     packageTable = SelectorTable(centralWidget(), "packageTable");
     packageTable->setSizePolicy(Qt::SizePolicy(7, 7, 0, 3, packageTable->sizePolicy()->hasHeightForWidth()));
     $layout19->addWidget(packageTable);
 
+    print STDERR "Setting the package tab...\n" if $options{debug};
     packageTabWidget = Qt::TabWidget(centralWidget(), "packageTabWidget");
     packageTabWidget->setSizePolicy(Qt::SizePolicy(7, 7, 0, 2, packageTabWidget->sizePolicy()->hasHeightForWidth()));
     packageTabWidget->setTabShape(&Qt::TabWidget::Triangular);
     Qt::ToolTip::add(packageTabWidget, trUtf8("Display of information about the package selected above"));
 
+    print STDERR "Setting the information tab...\n" if $options{debug};
     informationTab = Qt::Widget(packageTabWidget, "informationTab");
     my $informationTabLayout = Qt::GridLayout(informationTab, 1, 1, 0, 6, '$informationTabLayout');
 
+    print STDERR "Settong the information text box...\n" if $options{debug};
     informationTextBox = Qt::TextEdit(informationTab, "informationTextBox");
     informationTextBox->setReadOnly(1);
 
     $informationTabLayout->addWidget(informationTextBox, 0, 0);
     packageTabWidget->insertTab(informationTab, trUtf8("Information"));
 
+    print STDERR "Setting the povide tab...\n" if $options{debug};
     providesTab = Qt::Widget(packageTabWidget, "providesTab");
     my $providesTabLayout = Qt::GridLayout(providesTab, 1, 1, 0, 6, '$providesTabLayout');
 
+    print STDERR "Setting the provide text box...\n" if $options{debug};
     providesTextBox = Qt::TextEdit(providesTab, "providesTextBox");
     providesTextBox->setReadOnly(1);
 
     $providesTabLayout->addWidget(providesTextBox, 0, 0);
     packageTabWidget->insertTab(providesTab, trUtf8("Provides"));
 
+    print STDERR "Setting the conflicts tab...\n" if $options{debug};
     conflictsTab = Qt::Widget(packageTabWidget, "conflictsTab");
     my $conflictsTabLayout = Qt::GridLayout(conflictsTab, 1, 1, 0, 6, '$conflictsTabLayout');
 
@@ -206,6 +225,7 @@ sub NEW
     $conflictsTabLayout->addWidget(conflictsTextBox, 0, 0);
     packageTabWidget->insertTab(conflictsTab, trUtf8("Conflicts"));
 
+    print STDERR "Setting the requires tab...\n" if $options{debug};
     requiresTab = Qt::Widget(packageTabWidget, "requiresTab");
     my $requiresTabLayout = Qt::GridLayout(requiresTab, 1, 1, 0, 6, '$requiresTabLayout');
 
@@ -218,6 +238,7 @@ sub NEW
     packagerTab = Qt::Widget(packageTabWidget, "packagerTab");
     my $packagerTabLayout = Qt::GridLayout(packagerTab, 1, 1, 0, 6, '$packagerTabLayout');
 
+    print STDERR "Setting the packager text box...\n" if $options{debug};
     packagerTextBox = Qt::TextEdit(packagerTab, "packagerTextBox");
     packagerTextBox->setReadOnly(1);
 
@@ -227,6 +248,7 @@ sub NEW
 
     my $layout18 = Qt::HBoxLayout(undef, 11, 6, '$layout18');
 
+    print STDERR "Setting the \"previous\" button...\n" if $options{debug};
     previousButton = Qt::PushButton(centralWidget(), "previousButton");
     previousButton->setSizePolicy(Qt::SizePolicy(1, 1, 1, 0, previousButton->sizePolicy()->hasHeightForWidth()));
     previousButton_font = Qt::Font(previousButton->font);
@@ -234,10 +256,13 @@ sub NEW
     previousButton_font->setPointSize(14);
     previousButton->setFont(previousButton_font);
     previousButton->setText(trUtf8("&Previous"));
-    previousButton->setIconSet(Qt::IconSet(uic_load_pixmap_Selector("1leftarrow.png")));
+    # GV (2009/04/13): the following line creates issues with some version of
+    # Perl-Qt
+#    previousButton->setIconSet(Qt::IconSet(uic_load_pixmap_Selector("1leftarrow.png")));
     Qt::ToolTip::add(previousButton, trUtf8("Go to the previous step of the installer"));
     $layout18->addWidget(previousButton);
 
+    print STDERR "Setting the exit button...\n" if $options{debug};
     exitButton = Qt::PushButton(centralWidget(), "exitButton");
     exitButton->setSizePolicy(Qt::SizePolicy(1, 1, 2, 0, exitButton->sizePolicy()->hasHeightForWidth()));
     exitButton_font = Qt::Font(exitButton->font);
@@ -245,10 +270,13 @@ sub NEW
     exitButton_font->setPointSize(14);
     exitButton->setFont(exitButton_font);
     exitButton->setText(trUtf8("E&xit"));
-    exitButton->setIconSet(Qt::IconSet(uic_load_pixmap_Selector("exit.png")));
+    # GV (2009/04/13): the following line creates issues with some version of
+    # Perl-Qt
+#    exitButton->setIconSet(Qt::IconSet(uic_load_pixmap_Selector("exit.png")));
     Qt::ToolTip::add(exitButton, trUtf8("Exit the OSCAR Package Selector"));
     $layout18->addWidget(exitButton);
 
+    print STDERR "Setting the cancel button...\n" if $options{debug};
     cancelButton = Qt::PushButton(centralWidget(), "cancelButton");
     cancelButton->setSizePolicy(Qt::SizePolicy(1, 1, 2, 0, cancelButton->sizePolicy()->hasHeightForWidth()));
     cancelButton_font = Qt::Font(cancelButton->font);
@@ -256,10 +284,13 @@ sub NEW
     cancelButton_font->setPointSize(14);
     cancelButton->setFont(cancelButton_font);
     cancelButton->setText(trUtf8("&Cancel"));
-    cancelButton->setIconSet(Qt::IconSet(uic_load_pixmap_Selector("cancel.png")));
+    # GV (2009/04/13): the following line creates issues with some version of
+    # Perl-Qt
+#    cancelButton->setIconSet(Qt::IconSet(uic_load_pixmap_Selector("cancel.png")));
     Qt::ToolTip::add(cancelButton, trUtf8("Exit and abandon any changes"));
     $layout18->addWidget(cancelButton);
 
+    print STDERR "Setting the next button...\n" if $options{debug};
     nextButton = Qt::PushButton(centralWidget(), "nextButton");
     nextButton->setSizePolicy(Qt::SizePolicy(1, 1, 1, 0, nextButton->sizePolicy()->hasHeightForWidth()));
     nextButton_font = Qt::Font(nextButton->font);
@@ -267,24 +298,28 @@ sub NEW
     nextButton_font->setPointSize(14);
     nextButton->setFont(nextButton_font);
     nextButton->setText(trUtf8("&Next"));
-    nextButton->setIconSet(Qt::IconSet(uic_load_pixmap_Selector("1rightarrow.png")));
+    # GV (2009/04/13): the following line creates issues with some version of
+    # Perl-Qt
+#    nextButton->setIconSet(Qt::IconSet(uic_load_pixmap_Selector("1rightarrow.png")));
     Qt::ToolTip::add(nextButton, trUtf8("Go to the next step of the installer"));
     $layout18->addWidget(nextButton);
+
+    print STDERR "Adding layouts...\n" if $options{debug};
     $layout19->addLayout($layout18);
 
     $SelectorLayout->addLayout($layout19, 0, 0);
 
-
-
+    print STDERR "Setting the menu...\n" if $options{debug};
     menubar= Qt::MenuBar( this, "menubar");
 
 
-
+    print STDERR "Setting the signals...\n" if $options{debug};
     Qt::Object::connect(exitButton, SIGNAL "clicked()", this, SLOT "exitButton_clicked()");
-    Qt::Object::connect(aboutButton, SIGNAL "clicked()", this, SLOT "aboutButton_clicked()");
+#    Qt::Object::connect(aboutButton, SIGNAL "clicked()", this, SLOT "aboutButton_clicked()");
 #    Qt::Object::connect(manageSetsButton, SIGNAL "clicked()", this, SLOT "manageSetsButton_clicked()");
     Qt::Object::connect(cancelButton, SIGNAL "clicked()", this, SLOT "cancelButton_clicked()");
 
+    print STDERR "Setting tab order...\n" if $options{debug};
     setTabOrder(aboutButton, packageSetComboBox);
     setTabOrder(packageSetComboBox, manageSetsButton);
     setTabOrder(manageSetsButton, packageTabWidget);
@@ -295,12 +330,10 @@ sub NEW
     setTabOrder(previousButton, exitButton);
     setTabOrder(exitButton, nextButton);
 
+    print STDERR "Starting the second step of the initialization...\n" 
+        if $options{debug};
     init();
 }
-
-
-sub init
-{
 
 #########################################################################
 #  Subroutine: init                                                     #
@@ -310,23 +343,33 @@ sub init
 #  displayed.  This is so we can populate the packageSetComboBox and    #
 #  the packageTable, as well as any other setup work.                   #
 #########################################################################
+sub init {
 
-  # Scan the command line for options
-  parseCommandLine();
+    print STDERR "Widget created but not yet displayed, finishing ".
+                 "initialization...\n" if $options{debug};
 
-  # Create the form windows for SelectorAbout and SelectorManageSets
-  aboutForm = SelectorAbout(this,"aboutForm");
-  manageSetsForm = SelectorManageSets(this,"manageSetsForm");
+    # Scan the command line for options
+    print STDERR "Parsing the command line...\n" if $options{debug};
+    parseCommandLine();
 
-  # Set up the SIGNALS / SLOTS connections
-  Qt::Object::connect(manageSetsForm, SIGNAL 'refreshPackageSets()', 
-                      this, SLOT 'refreshPackageSetComboBox()');
-  Qt::Object::connect(packageSetComboBox, 
-                      SIGNAL 'activated(const QString&)',
-                      packageTable,
-                      SLOT 'populateTable(const QString&)');
-  Qt::Object::connect(packageTable, SIGNAL 'selectionChanged()',
-                      this, SLOT 'rowSelectionChanged()');
+    # Create the form windows for SelectorAbout and SelectorManageSets
+    print STDERR "Create the form windows for SelectorAbout and ".
+                 "SelectorManageSets\n" if $options{debug};
+#    aboutForm = SelectorAbout(this,"aboutForm");
+#    manageSetsForm = SelectorManageSets(this,"manageSetsForm");
+
+    # Set up the SIGNALS / SLOTS connections
+    print STDERR "Set up the SIGNALS / SLOTS connections\n" if $options{debug};
+#    Qt::Object::connect(manageSetsForm, SIGNAL 'refreshPackageSets()', 
+#                        this, SLOT 'refreshPackageSetComboBox()');
+    Qt::Object::connect(packageSetComboBox, 
+                        SIGNAL 'activated(const QString&)',
+                        packageTable,
+                        SLOT 'populateTable(const QString&)');
+    Qt::Object::connect(packageTable, SIGNAL 'selectionChanged()',
+                        this, SLOT 'rowSelectionChanged()');
+    Qt::Object::connect(packageTable, SIGNAL 'deactivate_package_set_combo()',
+                        this, SLOT 'do_deactivate_package_set_combo()');
 
   # For now, hide the previous/next buttons, until they are needed
   previousButton->hide();
@@ -356,6 +399,15 @@ sub init
   # Populate the Package Set ComboBox / packageTable
   refreshPackageSetComboBox();
 
+}
+
+# We do not have a clean way to clean the widget that displays OPKGs data so we
+# simply deactivate the package set combo list when the user select a package
+# set. For that, we emit a signal and treat the signal here. We use a signal
+# because this object is the only one to have a pointer to the combo, the class
+# dealing with the table object is in SelectorTable.pm.
+sub do_deactivate_package_set_combo {
+    packageSetComboBox->clear();
 }
 
 sub parseCommandLine
