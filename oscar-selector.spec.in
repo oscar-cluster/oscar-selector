@@ -33,6 +33,7 @@ License:        GPL
 Group:          Applications/System
 Requires:       perl-Qt
 BuildRoot:      %{_localstatedir}/tmp/%{name}-root
+AutoReqProv:    no
 
 %description
 Set of scripts and Perl modules for the selection of OSCAR package in order to set the software configuration of an OSCAR cluster.
