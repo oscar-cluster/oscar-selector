@@ -4,6 +4,7 @@
 - Merge the oscar-selector and selector_cli scripts.
 - Full support package selection/unselection and package set management via
 the CLI.
+- Update the dependencies for the RPM packages.
 
 1.1.1:
 - Remove debugging messages.

@@ -1,5 +1,5 @@
-%define version     1.1.1
-%define release     1
+%define version     1.2svn20090415
+%define release     2
 
 %define binpref         /usr/bin
 %define libpref         PERLLIBPATH/OSCAR
@@ -22,6 +22,7 @@ Group:          Applications/System
 Source:         %{name}.tar.gz
 BuildArch:      noarch
 AutoReqProv: 	no
+Requires:	oscar-base-lib
 
 BuildRoot:      %{_localstatedir}/tmp/%{name}-root
 
@@ -32,6 +33,7 @@ Release:        %{release}
 License:        GPL
 Group:          Applications/System
 Requires:       perl-Qt
+Requires:	oscar-selector
 BuildRoot:      %{_localstatedir}/tmp/%{name}-root
 AutoReqProv:    no
 
