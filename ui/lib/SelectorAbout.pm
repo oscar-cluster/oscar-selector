@@ -7,7 +7,7 @@
 # been lost, therefore we directly modify this file.
 #
 
-package SelectorAbout;
+package Qt::SelectorAbout;
 use strict;
 use utf8;
 use Qt;

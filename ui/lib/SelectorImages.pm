@@ -18,7 +18,7 @@
 use strict;
 use utf8;
 
-package DesignerMimeSourceFactory_selectorImages;
+package Qt::DesignerMimeSourceFactory_selectorImages;
 use Qt;
 use Qt::isa qw(Qt::MimeSourceFactory);
 
@@ -2507,9 +2507,9 @@ sub data
 }
 
 
-package staticImages;
+package Qt::staticImages;
 use Qt;
-use DesignerMimeSourceFactory_selectorImages;
+use Qt::DesignerMimeSourceFactory_selectorImages;
 our %factories;
 
 my $factory = DesignerMimeSourceFactory_selectorImages;

@@ -111,7 +111,7 @@ sub NEW
   adjustColumn(2);            # Auto-set width of column 2
 
   # Create colors needed by the table when the GUI is run as the 'Updater'
-  SelectorUtils::createColors();
+  Qt::SelectorUtils::createColors();
 
   # When the value of any cell changes, call cellValueChanged to 
   # catch checkboxes on/off.

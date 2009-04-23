@@ -18,7 +18,7 @@ use strict;
 use utf8;
 
 
-package SelectorManageSets;
+package Qt::SelectorManageSets;
 use Qt;
 use Qt::isa qw(Qt::Dialog);
 use Data::Dumper;

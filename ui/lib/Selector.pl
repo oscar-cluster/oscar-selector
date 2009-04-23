@@ -70,11 +70,11 @@ use Qt::attributes qw(
 );
 #use Qt::signals deactivate_package_set_combo => [];
 
-use SelectorUtils;
+use Qt::SelectorUtils;
 use Qt::attributes qw( aboutForm manageSetsForm installuninstall );
-use SelectorManageSets;
-use SelectorImages;
-use SelectorAbout;
+use Qt::SelectorManageSets;
+use Qt::SelectorImages;
+use Qt::SelectorAbout;
 use lib "$ENV{OSCAR_HOME}/lib"; 
 use OSCAR::Database;
 use Getopt::Long;
@@ -183,7 +183,7 @@ sub NEW
     print STDERR "Setting the package table...\n" if $options{debug};
 #    Qt::Object::connect(packageTable, SIGNAL 'deactivate_package_set_combo()',
 #                        this, SLOT 'do_deactivate_package_set_combo()');
-    packageTable = SelectorTable(centralWidget(), "packageTable");
+    packageTable = Qt::SelectorTable(centralWidget(), "packageTable");
     packageTable->setSizePolicy(Qt::SizePolicy(7, 7, 0, 3, packageTable->sizePolicy()->hasHeightForWidth()));
     $layout19->addWidget(packageTable);
 
@@ -444,7 +444,7 @@ sub refreshPackageSetComboBox
   # Save the "currently" selected item in the combobox (if anything)
   my $lastText = packageSetComboBox->currentText();
   # Rebuild the list of items in the combobox
-  SelectorUtils::populatePackageSetList(packageSetComboBox);
+  Qt::SelectorUtils::populatePackageSetList(packageSetComboBox);
   # Try to reselect the previously selected item if it still exists
   my $foundit = 0;
   if (length $lastText > 0)

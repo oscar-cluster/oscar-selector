@@ -39,7 +39,7 @@ BEGIN {
 use strict;
 use utf8;
 
-package SelectorUtils;
+package Qt::SelectorUtils;
 
 use Qt;
 use OSCAR::Database;
@@ -419,7 +419,7 @@ sub populatePackageSetList ($) {
         $widget->insertItem($pkg,-1);
     }
 
-    emit SelectorManageSets::refreshPackageSets();
+    emit Qt::SelectorManageSets::refreshPackageSets();
 }
 
 

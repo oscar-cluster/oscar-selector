@@ -298,7 +298,7 @@ sub processInput
         exit 1;
     } elsif ( $command eq "set" ) {
         $$current_package_set = shift(@response);
-        OSCAR::SelectorCommon::printPackages("all", $$current_package_set);
+        printPackages("all", $$current_package_set);
     } elsif ( $command eq "list_sets" ) {
         my @sets = OSCAR::PackageSet::get_package_sets ();
         print "Available package sets:\n";
