@@ -7,7 +7,7 @@ Standards-Version: 3.7.2
 
 Package: oscar-selector
 Architecture: all
-Depends: ${shlibs:Depends}, ${misc:Depends}, liboscar
+Depends: ${shlibs:Depends}, ${misc:Depends}, liboscar, orm
 Description: OSCAR Selector
  Set of scripts and Perl modules for the selection of OSCAR packages that have
  to be installed on a OSCAR cluster.

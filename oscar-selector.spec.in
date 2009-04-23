@@ -23,6 +23,7 @@ Source:         %{name}.tar.gz
 BuildArch:      noarch
 AutoReqProv: 	no
 Requires:	oscar-base-lib
+Requires:	orm
 
 BuildRoot:      %{_localstatedir}/tmp/%{name}-root
 
