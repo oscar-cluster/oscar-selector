@@ -46,16 +46,13 @@ sub printPackages ($$) {
     my $distro = OSCAR::PackagePath::get_distro();
     my $compat_distro = OSCAR::PackagePath::get_compat_distro ($distro);
 
-    #Get all the selected packages
-    my $selected_packages = "Default";
-
     # We get the list of core packages, useful information to deal with 
     # selection
     my @core_opkgs = OSCAR::Opkg::get_list_core_opkgs();
 
     # Get a list of all the packages in the package set
     my @available_opkgs
-        = OSCAR::PackageSet::get_list_opkgs_in_package_set($selected_packages,
+        = OSCAR::PackageSet::get_list_opkgs_in_package_set($package_set,
                                                            $compat_distro); 
     my %selection_data
         = OSCAR::Database::get_opkgs_selection_data (@available_opkgs);
