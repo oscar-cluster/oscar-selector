@@ -1,5 +1,5 @@
-%define version     1.2svn20090415
-%define release     2
+%define version     1.2
+%define release     1
 
 %define binpref         /usr/bin
 %define libpref         PERLLIBPATH/OSCAR
@@ -64,6 +64,8 @@ make install-gui DESTDIR=$RPM_BUILD_ROOT
 %{guilibpref}/*
 
 %changelog
+* Thu Apr 23 2009 Geoffroy Vallee <valleegr@ornl.gov> 1.2-1
+- New upstream version.
 * Fri Feb 13 2009 Geoffroy Vallee <valleegr@ornl.gov> 1.1.1-1
 - New upstream version.
 * Thu Feb 12 2009 Geoffroy Vallee <valleegr@ornl.gov> 1.1-1
