@@ -67,7 +67,7 @@ sub paint
   my $qrect = shift;
   my $selected = shift;
 
-  my $cg = SelectorUtils::getTableItemColorGroup(this,$qcolorgroup);
+  my $cg = Qt::SelectorUtils::getTableItemColorGroup(this,$qcolorgroup);
 
   SUPER->paint($qpainter,$cg,$qrect,$selected);
 }
