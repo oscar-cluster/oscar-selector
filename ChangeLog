@@ -1,3 +1,9 @@
+1.2.1:
+- Fix various issues with the GUI: because of the code separation between the
+GUI and the rest of the code, we had to create a new namespace for the Perl
+modules related to the GUI. The support of this new namespace were not fully
+implemented.
+
 1.2:
 - Add dependency requirement for binary package creation (build.cfg).
 - Reorganize the code to separate the GUI code.
