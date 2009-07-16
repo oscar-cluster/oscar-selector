@@ -305,9 +305,10 @@ sub populateTable ($$) {
         my $rownum = 0;
 
         my ($location, $version);
+        my $rm = OSCAR::RepositoryManager->new (distro=>$distro);
+        my @core_opkgs = OSCAR::Opkg::get_list_core_opkgs ();
         require OSCAR::RepositoryManager;
         foreach my $opkg (@available_opkgs) {
-            my $rm = OSCAR::RepositoryManager->new (distro=>$distro);
             my ($rc, %opkg_data) = $rm->show_opkg ("opkg-$opkg");
 
             setNumRows($rownum+1); 
@@ -328,7 +329,6 @@ sub populateTable ($$) {
             setItem($rownum, 2, $item);
 
             # Column 3 contains the "class" of packages
-            my @core_opkgs = OSCAR::Opkg::get_list_core_opkgs ();
             my $opkg_class;
             if (OSCAR::Utils::is_element_in_array ($opkg, @core_opkgs) == 1) {
                 $opkg_class = "Core";

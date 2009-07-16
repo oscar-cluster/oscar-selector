@@ -1,3 +1,6 @@
+1.2.2:
+- Patch from Thilo: speed up the populate of the GUI table.
+
 1.2.1:
 - Fix various issues with the GUI: because of the code separation between the
 GUI and the rest of the code, we had to create a new namespace for the Perl
