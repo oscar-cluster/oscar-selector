@@ -1,3 +1,7 @@
+1.2.3 (not yet released):
+- Fix a sequence issue when loading the OSCAR::RepositoryManager Perl module
+in SelectorTable.pm.
+
 1.2.2:
 - Patch from Thilo: speed up the populate of the GUI table.
 

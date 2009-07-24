@@ -305,9 +305,9 @@ sub populateTable ($$) {
         my $rownum = 0;
 
         my ($location, $version);
+        require OSCAR::RepositoryManager;
         my $rm = OSCAR::RepositoryManager->new (distro=>$distro);
         my @core_opkgs = OSCAR::Opkg::get_list_core_opkgs ();
-        require OSCAR::RepositoryManager;
         foreach my $opkg (@available_opkgs) {
             my ($rc, %opkg_data) = $rm->show_opkg ("opkg-$opkg");
 
