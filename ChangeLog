@@ -1,4 +1,4 @@
-1.2.3 (not yet released):
+1.2.3:
 - Fix a sequence issue when loading the OSCAR::RepositoryManager Perl module
 in SelectorTable.pm.
 

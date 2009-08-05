@@ -1,3 +1,9 @@
+oscar-selector (1.2.3-1) hardy; urgency=low
+
+  * New upstream version.
+
+ -- Geoffroy Vallee <valleegr@ornl.gov>  Wed, 05 Aug 2009 10:50:12 -0400
+
 oscar-selector (1.2.2-1) hardy; urgency=low
 
   * New upstream version.
