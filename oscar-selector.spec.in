@@ -1,4 +1,4 @@
-%define version     1.2.3
+%define version     1.2.4
 %define release     1
 
 %define binpref         /usr/bin
@@ -64,6 +64,8 @@ make install-gui DESTDIR=$RPM_BUILD_ROOT
 %{guilibpref}/*
 
 %changelog
+* Fri Sep 25 2009 Geoffroy Vallee <valleegr@ornl.gov> 1.2.4-1
+- New upstream version.
 * Wed Aug 05 2009 Geoffroy Vallee <valleegr@ornl.gov> 1.2.3-1
 - New upstream version.
 * Thu Jul 16 2009 Geoffroy Vallee <valleegr@ornl.gov> 1.2.2-1
