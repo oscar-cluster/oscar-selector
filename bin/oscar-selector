@@ -162,7 +162,6 @@ if ($list) {
             die "ERROR: Unknown package set ($set_name)";
         }
     } else {
-        print "Prout\n";
         my @ps = OSCAR::PackageSet::get_package_sets();
         OSCAR::Utils::print_array (@ps);
     }

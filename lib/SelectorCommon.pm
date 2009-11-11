@@ -114,6 +114,11 @@ $printStatus,  $printPackage,  $printClass, $printVersion
 sub select_opkg ($@) {
     my ($package_set, @response) = @_;
 
+    if (!OSCAR::Utils::is_a_valid_string ($package_set)) {
+        carp "ERROR: Invalid package set";
+        return -1;
+    }
+
     my $packagename = shift(@response);
 
     if(!$packagename) {
