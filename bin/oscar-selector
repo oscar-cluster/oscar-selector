@@ -71,13 +71,13 @@ sub help_and_exit {
     exit 1;
 }
 
-sub interactive_selector {
+sub interactive_selector () {
     my @groups_list;
     my @package_sets = OSCAR::PackageSet::get_package_sets();
     my $selected_group;
 
     # Currently we only deal with the Default package set
-    my $selected_package_set = "Default";
+    $current_package_set = "Default";
 
     #Get a list of all the packages
     my $distro = OSCAR::PackagePath::get_distro();
@@ -86,8 +86,8 @@ sub interactive_selector {
     }
     my $compat_distro = OSCAR::PackagePath::get_compat_distro ($distro);
     my @opkgs = 
-        OSCAR::PackageSet::get_list_opkgs_in_package_set($selected_package_set,
-                                                        $compat_distro);
+        OSCAR::PackageSet::get_list_opkgs_in_package_set($current_package_set,
+                                                         $compat_distro);
 
     #List the packages and start getting input
     #Print the packages before giving a prompt
@@ -102,12 +102,12 @@ sub interactive_selector {
     my @completion_list = qw ( select unselect list file help quit exit );
     my $prompt = "\nselector> ";
 
-    while($continue)
-    {
+    while($continue) {
         my $response = Complete($prompt, @completion_list);
         $continue = OSCAR::SelectorCommon::processInput(\$current_package_set,
                                                         $response);
     }
+
     return 0;
 }
 

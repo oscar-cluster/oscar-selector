@@ -42,6 +42,21 @@ use Data::Dumper;
 sub printPackages ($$) {
     my ($class, $package_set) = @_;
 
+    my %known_classes = ('all' => 1,
+                         'core' => 2,
+                         'included' => 3,
+                         'third party' => 4 );
+
+    if (!defined $class || $class eq "") {
+        $class = "all";
+    }
+
+    if (!defined %known_classes->{$class}) {
+        carp "ERROR: Unknown class $class\n".
+             "Available class: core, included, third party, all\n";
+        return -1;
+    }
+
     # we currently assume we deal only with the local distro
     my $distro = OSCAR::PackagePath::get_distro();
     my $compat_distro = OSCAR::PackagePath::get_compat_distro ($distro);
