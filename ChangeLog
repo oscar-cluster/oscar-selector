@@ -1,4 +1,4 @@
-1.2.5 (not yet released):
+1.2.5:
 - Remove useless debugging messages.
 - Better handling of exceptions.
 - Fix various issues for the selection of OPKGs (patches from Olivier Lahaye).
