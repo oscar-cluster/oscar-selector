@@ -1,3 +1,6 @@
+1.2.6 (not yet released):
+- Fix a problem when getting package data and display it in the GUI.
+
 1.2.5:
 - Remove useless debugging messages.
 - Better handling of exceptions.

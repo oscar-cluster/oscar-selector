@@ -590,6 +590,7 @@ sub updateTextBox
 #  information (description), provides, requires, and conflicts.        #
 #########################################################################
 sub rowSelectionChanged () {
+    print "New row selected!\n";
     # Figure out which row of the table is now selected
     my $row = packageTable->selection(0)->anchorRow();
 
@@ -598,17 +599,24 @@ sub rowSelectionChanged () {
     # Find the "short name" of the package in that row
     my $package = packageTable->text($row,0);
     my @res;
-    get_packages (\@res, undef, undef, package => "$package");
+    my $rc = OSCAR::Database::get_packages (\@res,
+                                            undef, 
+                                            undef, 
+                                            package => "$package");
+    if ($rc == 0) {
+        carp "ERROR: Impossible to get OPKGs' information";
+        return;
+    }
     my $nb_res = scalar(@res);
     if ($nb_res != 1) {
-        carp "ERROR: we did not get data for exactly one OPKG ($nb_res)\n";
-        return -1;
+        print "WARN: we did not get data for exactly one OPKG ([$nb_res]".
+        join (", ", @res) . ")\n";
     }
     my $ref_hash = $res[0];
 
     # Update the four infomrational text boxes
     informationTextBox->setText($$ref_hash{description});
-    updateTextBox("provides",$package);
+    updateTextBox("provides", $package);
     # GV: requires and conflicts are kind of useless and we do not have a direct
     # access to this data via ODA with the current implementation.
 #   updateTextBox("requires",$package);
