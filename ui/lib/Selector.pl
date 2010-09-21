@@ -204,36 +204,36 @@ sub NEW
     $informationTabLayout->addWidget(informationTextBox, 0, 0);
     packageTabWidget->insertTab(informationTab, trUtf8("Information"));
 
-    print STDERR "Setting the povide tab...\n" if $options{debug};
-    providesTab = Qt::Widget(packageTabWidget, "providesTab");
-    my $providesTabLayout = Qt::GridLayout(providesTab, 1, 1, 0, 6, '$providesTabLayout');
+#    print STDERR "Setting the povide tab...\n" if $options{debug};
+#    providesTab = Qt::Widget(packageTabWidget, "providesTab");
+#    my $providesTabLayout = Qt::GridLayout(providesTab, 1, 1, 0, 6, '$providesTabLayout');
+#
+#    print STDERR "Setting the provide text box...\n" if $options{debug};
+#    providesTextBox = Qt::TextEdit(providesTab, "providesTextBox");
+#    providesTextBox->setReadOnly(1);
+#
+#    $providesTabLayout->addWidget(providesTextBox, 0, 0);
+#    packageTabWidget->insertTab(providesTab, trUtf8("Provides"));
 
-    print STDERR "Setting the provide text box...\n" if $options{debug};
-    providesTextBox = Qt::TextEdit(providesTab, "providesTextBox");
-    providesTextBox->setReadOnly(1);
+#    print STDERR "Setting the conflicts tab...\n" if $options{debug};
+#    conflictsTab = Qt::Widget(packageTabWidget, "conflictsTab");
+#    my $conflictsTabLayout = Qt::GridLayout(conflictsTab, 1, 1, 0, 6, '$conflictsTabLayout');
+#
+#    conflictsTextBox = Qt::TextEdit(conflictsTab, "conflictsTextBox");
+#    conflictsTextBox->setReadOnly(1);
+#
+#    $conflictsTabLayout->addWidget(conflictsTextBox, 0, 0);
+#    packageTabWidget->insertTab(conflictsTab, trUtf8("Conflicts"));
 
-    $providesTabLayout->addWidget(providesTextBox, 0, 0);
-    packageTabWidget->insertTab(providesTab, trUtf8("Provides"));
-
-    print STDERR "Setting the conflicts tab...\n" if $options{debug};
-    conflictsTab = Qt::Widget(packageTabWidget, "conflictsTab");
-    my $conflictsTabLayout = Qt::GridLayout(conflictsTab, 1, 1, 0, 6, '$conflictsTabLayout');
-
-    conflictsTextBox = Qt::TextEdit(conflictsTab, "conflictsTextBox");
-    conflictsTextBox->setReadOnly(1);
-
-    $conflictsTabLayout->addWidget(conflictsTextBox, 0, 0);
-    packageTabWidget->insertTab(conflictsTab, trUtf8("Conflicts"));
-
-    print STDERR "Setting the requires tab...\n" if $options{debug};
-    requiresTab = Qt::Widget(packageTabWidget, "requiresTab");
-    my $requiresTabLayout = Qt::GridLayout(requiresTab, 1, 1, 0, 6, '$requiresTabLayout');
-
-    requiresTextBox = Qt::TextEdit(requiresTab, "requiresTextBox");
-    requiresTextBox->setReadOnly(1);
-
-    $requiresTabLayout->addWidget(requiresTextBox, 0, 0);
-    packageTabWidget->insertTab(requiresTab, trUtf8("Requires"));
+#    print STDERR "Setting the requires tab...\n" if $options{debug};
+#    requiresTab = Qt::Widget(packageTabWidget, "requiresTab");
+#    my $requiresTabLayout = Qt::GridLayout(requiresTab, 1, 1, 0, 6, '$requiresTabLayout');
+#
+#    requiresTextBox = Qt::TextEdit(requiresTab, "requiresTextBox");
+#    requiresTextBox->setReadOnly(1);
+#
+#    $requiresTabLayout->addWidget(requiresTextBox, 0, 0);
+#    packageTabWidget->insertTab(requiresTab, trUtf8("Requires"));
 
     packagerTab = Qt::Widget(packageTabWidget, "packagerTab");
     my $packagerTabLayout = Qt::GridLayout(packagerTab, 1, 1, 0, 6, '$packagerTabLayout');

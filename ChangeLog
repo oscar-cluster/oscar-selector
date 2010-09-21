@@ -1,5 +1,6 @@
 1.2.6 (not yet released):
 - Fix a problem when getting package data and display it in the GUI.
+- [Ticket #495] Clean-up the Selector GUI tabs (remove unused tabs).
 
 1.2.5:
 - Remove useless debugging messages.
