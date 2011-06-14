@@ -47,11 +47,9 @@ Qt graphical user interface for OSCAR Selector.
 %prep
 %setup -n %{name}
 
-%build
-make install-cli DESTDIR=$RPM_BUILD_ROOT
-make install-gui DESTDIR=$RPM_BUILD_ROOT
-
 %install
+%__make install-cli DESTDIR=$RPM_BUILD_ROOT
+%__make install-gui DESTDIR=$RPM_BUILD_ROOT
 
 %files
 %defattr(-,root,root)
