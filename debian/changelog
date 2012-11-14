@@ -1,3 +1,9 @@
+oscar-selector (1.2.6-2) precise; urgency=low
+
+  * Fix a dependency problem on Ubuntu-12.04.
+
+ -- Geoffroy Vallee <valleegr@ornl.gov>  Wed, 14 Nov 2012 16:30:51 -0500
+
 oscar-selector (1.2.6-1) lucid; urgency=low
 
   * New upstream version.
