@@ -1,7 +1,11 @@
 1.2.7 (not yet released):
 - Automatically detect the source directory for RPM based systems (patch from
 O. Lahaye).
-- Update the .spec.in file so it works on Scientific Linux 6.0 (patch from O. Lahaye).
+- Update the .spec.in file so it works on Scientific Linux 6.0 (patch from O.
+Lahaye).
+- Add MANDIR to config.mk, put man in system man dir (as bin are in system bin
+dir)
+- use rpm macros for paths. No more need for sed in makefile
 
 1.2.6:
 - Fix a problem when getting package data and display it in the GUI.

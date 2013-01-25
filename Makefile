@@ -30,7 +30,6 @@ clean:
 	@rm -rf debian/$(PKG) debian/$(PKG)-x11
 	@rm -f debian/files debian/oscar-selector.debhelper.log
 	@rm -f $(PKG).tar.gz
-	@rm -f $(PKG).spec
 	for dir in ${BACKEND_SUBDIRS} ; do ( cd $$dir ; ${MAKE} clean ) ; done
 	for dir in ${GUI_SUBDIRS} ; do ( cd $$dir ; ${MAKE} clean ) ; done
 
@@ -45,8 +44,6 @@ dist: clean
 	@rm -f /tmp/$(PKG).tar.gz
 
 rpm: dist
-	sed -e "s/PERLLIBPATH/$(SEDLIBDIR)/" < $(PKG).spec.in \
-        > $(PKG).spec
 	cp $(PKG).tar.gz `rpm --eval '%_sourcedir'`
 	rpmbuild -bb ./$(PKG).spec
 	@if [ -n "$(PKGDEST)" ]; then \

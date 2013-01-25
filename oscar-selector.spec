@@ -1,19 +1,10 @@
-%define version     1.2.6
+%define version     1.2.7
 %define release     1
-
-%define binpref         /usr/bin
-%define libpref         PERLLIBPATH/OSCAR
-%define guilibpref      PERLLIBPATH/Qt
-%define manpref         /usr/local/man/man1/
-%define bintarget       $RPM_BUILD_ROOT%{binpref}
-%define libtarget       $RPM_BUILD_ROOT%{libpref}
-%define guilibtarget    $RPM_BUILD_ROOT%{guilibpref}
-%define mantarget       $RPM_BUILD_ROOT%{manpref}
 
 Summary:        OSCAR Package Selector.
 Name:           oscar-selector
-Version:        %{version}
-Release:        %{release}
+Version:        1.2.7
+Release:        1
 Vendor:         Open Cluster Group <http://OSCAR.OpenClusterGroup.org/>
 Distribution:   OSCAR
 Packager:       Geoffroy Vallee <valleegr@ornl.gov>
@@ -29,13 +20,9 @@ BuildRoot:      %{_localstatedir}/tmp/%{name}-root
 
 %package x11
 Summary:        OSCAR Package Selector Qt GUI
-Version:        %{version}
-Release:        %{release}
-License:        GPL
 Group:          Applications/System
 Requires:       perl-Qt
 Requires:	oscar-selector
-BuildRoot:      %{_localstatedir}/tmp/%{name}-root
 AutoReqProv:    no
 
 %description
@@ -53,15 +40,19 @@ Qt graphical user interface for OSCAR Selector.
 
 %files
 %defattr(-,root,root)
-%{binpref}/*
-%{libpref}/*
-%{manpref}/*
+%{_bindir}/*
+%{perl_vendorlib}/OSCAR/*
+%{_mandir}/*
 
 %files x11
 %defattr(-,root,root)
-%{guilibpref}/*
+%{perl_vendorlib}/Qt/*
 
 %changelog
+* Wed Nov 14 2012 Olivier Lahaye <olivier.lahaye@cea.fr> 1.2.7-1
+- New upstream version.
+- Use rpm macro for paths.
+- Simplify spec file.
 * Tue Feb 08 2011 Geoffroy Vallee <valleegr@ornl.gov> 1.2.6-1
 - New upstream version.
 * Tue Nov 24 2009 Geoffroy Vallee <valleegr@ornl.gov> 1.2.5-1
