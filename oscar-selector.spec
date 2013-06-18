@@ -4,7 +4,7 @@
 Summary:        OSCAR Package Selector.
 Name:           oscar-selector
 Version:        1.2.7
-Release:        1
+Release:        2
 Vendor:         Open Cluster Group <http://OSCAR.OpenClusterGroup.org/>
 Distribution:   OSCAR
 Packager:       Geoffroy Vallee <valleegr@ornl.gov>
@@ -15,6 +15,8 @@ BuildArch:      noarch
 AutoReqProv: 	no
 Requires:	oscar-base-lib
 Requires:	orm
+BuildRequires:	perl
+#BuildRequires:	dblatex, sgmltools-lite
 
 BuildRoot:      %{_localstatedir}/tmp/%{name}-root
 
@@ -49,6 +51,9 @@ Qt graphical user interface for OSCAR Selector.
 %{perl_vendorlib}/Qt/*
 
 %changelog
+* Tue Jun 18 2013 Olivier Lahaye <olivier.lahaye@cea.fr> 1.2.7-2
+- Added Build requires (perl for pod2man)
+- Missing build dep: dblatex and sgmltools-lite for doc generation.
 * Wed Nov 14 2012 Olivier Lahaye <olivier.lahaye@cea.fr> 1.2.7-1
 - New upstream version.
 - Use rpm macro for paths.
