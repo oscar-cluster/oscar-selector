@@ -89,7 +89,7 @@ sub NEW
     urlButton->setFont(urlButton_font);
     urlButton->setText(trUtf8("http://oscar.sourceforge.net/"));
     urlButton->setFlat(1);
-    Qt::ToolTip::add(urlButton, trUtf8("Open the OSCAR homepage in Mozilla"));
+    Qt::ToolTip::add(urlButton, trUtf8("Open the OSCAR homepage in Firefox"));
     $Layout37->addWidget(urlButton);
     $Layout38->addLayout($Layout37);
 
@@ -108,16 +108,16 @@ sub urlButton_clicked
 #  Returns   : Nothing                                                  #
 #  This subroutine is called when the URL button (the one with the      #
 #  link to http://oscar.sourceforge.net/) is clicked.  It checks for    #
-#  the mozilla binary.  If found, it launches the OSCAR homepage.       #
+#  the firefox binary.  If found, it launches the OSCAR homepage.       #
 #########################################################################
 
-  open(CMD,'which mozilla |');
+  open(CMD,'which firefox |');
   my $cmd_output = <CMD>;
   close CMD;
   chomp $cmd_output;  
 
   system($cmd_output . " http://oscar.sourceforge.net/ &") if 
-    ($cmd_output !~ "^which: no mozilla");
+    ($cmd_output !~ "^which: no firefox");
 
 }
 
