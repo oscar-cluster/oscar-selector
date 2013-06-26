@@ -51,7 +51,7 @@ sub printPackages ($$) {
         $class = "all";
     }
 
-    if (!defined %known_classes->{$class}) {
+    if (!defined $known_classes{$class}) {
         carp "ERROR: Unknown class $class\n".
              "Available class: core, included, third party, all\n";
         return -1;
