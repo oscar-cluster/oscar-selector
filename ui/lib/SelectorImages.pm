@@ -14,13 +14,16 @@
 #
 # Note that we do not use puic anymore to modify this file. This capability has
 # been lost, therefore we directly modify this file.
+#
+# $Id$
+#
 
 use strict;
 use utf8;
 
 package Qt::DesignerMimeSourceFactory_selectorImages;
-use Qt;
-use Qt::isa qw(Qt::MimeSourceFactory);
+use QtCore4;
+use QtCore4::isa qw(Qt3::MimeSourceFactory);
 
 # images/1leftarrow.png
 my $image_0_data = pack 'L*',

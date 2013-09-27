@@ -6,37 +6,31 @@
 # Note that we do not use puic anymore to modify this file. This capability has
 # been lost, therefore we directly modify this file.
 #
+# $Id$
+#
 
 package Qt::SelectorAbout;
 use strict;
 use utf8;
-use Qt;
-use Qt::isa qw(Qt::Dialog);
-use Qt::slots
+use QtCore4;
+use QtCore4::isa qw(Qt::Dialog);
+use QtCore4::slots
     urlButton_clicked => [];
-use Qt::attributes qw(
-    pictureLabel
-    aboutTitleLabel
-    aboutTitleLabel_font
-    copyrightLabel
-    urlButton
-    urlButton_font
-);
 
-use Qt::SelectorImages;
+#use Qt::SelectorImages;
 
-sub uic_load_pixmap_SelectorAbout
-{
-    my $pix = Qt::Pixmap();
-    my $m = Qt::MimeSourceFactory::defaultFactory()->data(shift);
-
-    if($m)
-    {
-        Qt::ImageDrag::decode($m, $pix);
-    }
-
-    return $pix;
-}
+#sub uic_load_pixmap_SelectorAbout
+#{
+#    my $pix = Qt::Pixmap();
+#    my $m = Qt::MimeSourceFactory::defaultFactory()->data(shift);
+#
+#    if($m)
+#    {
+#        Qt::ImageDrag::decode($m, $pix);
+#    }
+#
+#    return $pix;
+#}
 
 
 sub NEW
@@ -57,45 +51,46 @@ sub NEW
 
     my $Layout38 = Qt::HBoxLayout(undef, 0, 6, '$Layout38');
 
-    pictureLabel = Qt::Label(this, "pictureLabel");
-    pictureLabel->setPixmap(uic_load_pixmap_SelectorAbout("oscar.png"));
-    pictureLabel->setScaledContents(1);
-    $Layout38->addWidget(pictureLabel);
+    my $pictureLabel = Qt::Label();
+    $pictureLabel->addPixmap(Qt::Pixmap('oscar.png'));
+    #$pictureLabel->setPixmap($uic_load_pixmap_SelectorAbout("oscar.png"));
+    $pictureLabel->setScaledContents(1);
+    $Layout38->addWidget($pictureLabel);
 
     my $Layout37 = Qt::VBoxLayout(undef, 0, 6, '$Layout37');
 
-    aboutTitleLabel = Qt::Label(this, "aboutTitleLabel");
-    aboutTitleLabel_font = Qt::Font(aboutTitleLabel->font);
-    aboutTitleLabel_font->setFamily("Helvetica [Urw]");
-    aboutTitleLabel_font->setPointSize(24);
-    aboutTitleLabel_font->setBold(1);
-    aboutTitleLabel_font->setItalic(1);
-    aboutTitleLabel->setFont(aboutTitleLabel_font);
-    aboutTitleLabel->setText(trUtf8("OSCAR Package Selector"));
-    $Layout37->addWidget(aboutTitleLabel);
+    my $aboutTitleLabel = Qt::Label();
+    my $aboutTitleLabel_font = $aboutTitleLabel->font();
+    $aboutTitleLabel_font->setFamily("Helvetica [Urw]");
+    $aboutTitleLabel_font->setPointSize(24);
+    $aboutTitleLabel_font->setBold(1);
+    $aboutTitleLabel_font->setItalic(1);
+    $aboutTitleLabel->setFont($aboutTitleLabel_font);
+    $aboutTitleLabel->setText(trUtf8("OSCAR Package Selector"));
+    $Layout37->addWidget($aboutTitleLabel);
 
-    copyrightLabel = Qt::Label(this, "copyrightLabel");
-    copyrightLabel->setText(trUtf8("(C) 2003 NCSA, UIUC"));
-    copyrightLabel->setAlignment(int(&Qt::Label::AlignCenter));
-    $Layout37->addWidget(copyrightLabel);
+    my $copyrightLabel = Qt::Label();
+    $copyrightLabel->setText(trUtf8("(C) 2003 NCSA, UIUC"));
+    $copyrightLabel->setAlignment(int(&Qt::Label::AlignCenter));
+    $Layout37->addWidget($copyrightLabel);
 
-    urlButton = Qt::PushButton(this, "urlButton");
-    urlButton->setPaletteForegroundColor(Qt::Color(85, 0, 255));
-    urlButton_font = Qt::Font(urlButton->font);
-    urlButton_font->setFamily("Helvetica [Urw]");
-    urlButton_font->setPointSize(18);
-    urlButton_font->setBold(1);
-    urlButton_font->setUnderline(1);
-    urlButton->setFont(urlButton_font);
-    urlButton->setText(trUtf8("http://oscar.sourceforge.net/"));
-    urlButton->setFlat(1);
-    Qt::ToolTip::add(urlButton, trUtf8("Open the OSCAR homepage in Firefox"));
-    $Layout37->addWidget(urlButton);
+    my $urlButton = Qt::PushButton();
+    $urlButton->setPaletteForegroundColor(Qt::Color(85, 0, 255));
+    my $urlButton_font = $urlButton->font();
+    $urlButton_font->setFamily("Helvetica [Urw]");
+    $urlButton_font->setPointSize(18);
+    $urlButton_font->setBold(1);
+    $urlButton_font->setUnderline(1);
+    $urlButton->setFont($urlButton_font);
+    $urlButton->setText(trUtf8("http://oscar.sourceforge.net/"));
+    $urlButton->setFlat(1);
+    $urlButton->setToolTip(trUtf8("Open the OSCAR homepage in Firefox"));
+    $Layout37->addWidget($urlButton);
     $Layout38->addLayout($Layout37);
 
     $SelectorAboutLayout->addLayout($Layout38, 0, 0);
 
-    Qt::Object::connect(urlButton, SIGNAL "clicked()", this, SLOT "urlButton_clicked()");
+    Qt::Object::connect($urlButton, SIGNAL "clicked()", this, SLOT "urlButton_clicked()");
 }
 
 

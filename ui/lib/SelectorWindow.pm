@@ -17,6 +17,9 @@
 # been lost, therefore we directly modify this file.
 #
 
+use strict;
+use utf8;
+
 package Qt::SelectorWindow;
 
 use QtCore4;
@@ -37,17 +40,13 @@ use QtCore4::slots
     aboutButton_clicked => [],
     manageSetsButton_clicked => [],
     makePackageTable => [],
-    exitButton_clicked => [],
+    cancelButton_clicked => [],
     okButton_clicked => [],
     cancelButton_clicked => [],
     updateTextBox => [],
     rowSelectionChanged => [],
     do_deactivate_package_set_combo => [];
 
-my $manageSetsButton;
-my $packageSetComboBox;
-my $packageModel;
-my $exitButton;
 
 use Qt::SelectorUtils;
 use Qt::SelectorManageSets;
@@ -57,6 +56,9 @@ use lib "$ENV{OSCAR_HOME}/lib";
 use OSCAR::Database;
 use Getopt::Long;
 use Carp;
+
+my %options = ();
+my @errors = ();
 
 #########################################################################
 #  Create SelectorWindow UI for selector.                               #
@@ -94,20 +96,18 @@ sub init {
     print STDERR "Widget created but not yet displayed, finishing ".
                  "initialization...\n" if $options{debug};
 
-    # Scan the command line for options
-    print STDERR "Parsing the command line...\n" if $options{debug};
-
     # Create the form windows for SelectorAbout and SelectorManageSets
     print STDERR "Create the form windows for SelectorAbout and ".
                  "SelectorManageSets\n" if $options{debug};
-#    aboutForm = SelectorAbout(this,"aboutForm");
-    $manageSetsForm = Qt::SelectorManageSets();
+    #this->{aboutForm} = Qt::SelectorAbout();
+    this->{manageSetsForm} = Qt::SelectorManageSets();
 
     # Set up the SIGNALS / SLOTS connections
     print STDERR "Set up the SIGNALS / SLOTS connections\n" if $options{debug};
-    Qt::Object::connect($manageSetsButton, SIGNAL 'clicked()', 
+    Qt::Object::connect(this->{manageSetsButton}, SIGNAL 'clicked()', 
                         this, SLOT 'manageSetsButton_clicked()');
-    Qt::Object::connect($packageSetComboBox, 
+    #Qt::Object::connect(this->{aboutButton}, SIGNAL "clicked()", this, SLOT "aboutButton_clicked()");
+    Qt::Object::connect(this->{packageSetComboBox}, 
                         SIGNAL 'currentIndexChanged(int)',
                         this,
                         SLOT 'makePackageTable()');
@@ -117,9 +117,9 @@ sub init {
     #                    this, SLOT 'do_deactivate_package_set_combo()');
 
     print STDERR "Setting the signals...\n" if $options{debug};
-    Qt::Object::connect($okButton, SIGNAL "clicked()", this, SLOT "okButton_clicked()");
+    Qt::Object::connect(this->{okButton}, SIGNAL "clicked()", this, SLOT "okButton_clicked()");
     print STDERR "Setting the signals...\n" if $options{debug};
-    Qt::Object::connect($exitButton, SIGNAL "clicked()", this, SLOT "exitButton_clicked()");
+    Qt::Object::connect(this->{cancelButton}, SIGNAL "clicked()", this, SLOT "cancelButton_clicked()");
 
     # Populate the Package Set ComboBox / packageTable
     refreshPackageSetComboBox();
@@ -142,12 +142,13 @@ sub createSelectorPage {
 
     my $mainLayout = Qt::HBoxLayout();
 
-    my $okButtonLayout = Qt::HBoxLayout();
-    my $exitButtonLayout = Qt::VBoxLayout();
-
     my $titleLayout = Qt::VBoxLayout();
+    my $psLayout = Qt::HBoxLayout();
+    my $okButtonLayout = Qt::HBoxLayout();
+    my $cancelButtonLayout = Qt::VBoxLayout();
 
     my $titleLabel = Qt::Label();
+    this->{titleLabel} = $titleLabel;
     my $labelFont = $titleLabel->font();
     $labelFont->setFamily('Helvetica [Urw]');
     $labelFont->setPointSize(24);
@@ -159,13 +160,11 @@ sub createSelectorPage {
     $titleLabel->setText(trUtf8("OSCAR Package Selector"));
     $titleLabel->setAlignment(Qt::AlignCenter());
     $titleLayout->addWidget($titleLabel);
-    this->{titleLabel} = $titleLabel;
 
-    my $psLayout = Qt::HBoxLayout();
 
     print STDERR "Setting the package set label...\n" if $options{debug};
     my $packLabel = Qt::Label();
-    $packLabel_font = $packLabel->font();
+    my $packLabel_font = $packLabel->font();
     $packLabel_font->setFamily("Helvetica [Urw]");
     $packLabel_font->setPointSize(14);
     $packLabel_font->setBold(1);
@@ -174,18 +173,22 @@ sub createSelectorPage {
     $psLayout->addWidget($packLabel);
 
     print STDERR "Setting the package set combo...\n" if $options{debug};
-    $packageSetComboBox = Qt::ComboBox();
+    my $packageSetComboBox = Qt::ComboBox();
+    this->{packageSetComboBox} = $packageSetComboBox;
     $packageSetComboBox->setPalette(Qt::Palette(Qt::Color(0, 85, 255)));
-    $packageSetComboBox_font = $packageSetComboBox->font();
+    my $packageSetComboBox_font = $packageSetComboBox->font();
     $packageSetComboBox_font->setFamily("Helvetica [Urw]");
     $packageSetComboBox_font->setPointSize(14);
     $packageSetComboBox_font->setBold(1);
     $packageSetComboBox->setFont($packageSetComboBox_font);
     $packageSetComboBox->setToolTip(trUtf8("Display the packages in this package set"));
     $psLayout->addWidget($packageSetComboBox);
-    this->{packageSetComboBox} = $packageSetComboBox;
 
-    $manageSetsButton = Qt::PushButton();
+    #print STDERR "Setting the 'About' button of the OSCAR Selector...\n" if $options{debug};
+    #$aboutForm = Qt::SelectorAbout();
+
+    my $manageSetsButton = Qt::PushButton();
+    this->{manageSetsButton} = $manageSetsButton;
     $manageSetsButton->setText(trUtf8("&Manage Sets"));
     $manageSetsButton->setToolTip(trUtf8("Add, delete, and rename package sets"));
     $psLayout->addWidget($manageSetsButton);
@@ -198,35 +201,37 @@ sub createSelectorPage {
     this->{packageModel} = $packageModel;
     my $newTable = this->{packageTable}->setSourceModel($packageModel);
     this->{ptSelectionModel} = $newTable->selectionModel();
-    $packageLayout = this->{packageTable}->getLayout($newTable);
+    my $packageLayout = this->{packageTable}->getLayout($newTable);
 
-    $pkgDetailLayout = this->{packageTable}->getPackageDetail();
+    my $pkgDetailLayout = this->{packageTable}->getPackageDetail();
 
     print STDERR "Setting the ok button...\n" if $options{debug};
-    $okButton = Qt::PushButton();
-    $okButton_font = $okButton->font();
+    my $okButton = Qt::PushButton();
+    this->{okButton} = $okButton;
+    my $okButton_font = $okButton->font();
     $okButton_font->setFamily("Helvetica [Urw]");
     $okButton_font->setPointSize(14);
     $okButton->setFont($okButton_font);
-    $okButton->setText(trUtf8("OK"));
+    $okButton->setText(trUtf8("&OK"));
     $okButton->setToolTip(trUtf8("OK the OSCAR Package Selector"));
     $okButtonLayout->addWidget($okButton);
 
     print STDERR "Setting the exit button...\n" if $options{debug};
-    $exitButton = Qt::PushButton();
-    $exitButton_font = $exitButton->font();
-    $exitButton_font->setFamily("Helvetica [Urw]");
-    $exitButton_font->setPointSize(14);
-    $exitButton->setFont($exitButton_font);
-    $exitButton->setText(trUtf8("E&xit"));
-    $exitButton->setToolTip(trUtf8("Exit the OSCAR Package Selector"));
-    $exitButtonLayout->addWidget($exitButton);
+    my $cancelButton = Qt::PushButton();
+    this->{cancelButton} = $cancelButton;
+    my $cancelButton_font = $cancelButton->font();
+    $cancelButton_font->setFamily("Helvetica [Urw]");
+    $cancelButton_font->setPointSize(14);
+    $cancelButton->setFont($cancelButton_font);
+    $cancelButton->setText(trUtf8("&Cancel"));
+    $cancelButton->setToolTip(trUtf8("Exit the OSCAR Package Selector without saving"));
+    $cancelButtonLayout->addWidget($cancelButton);
 
     $titleLayout->addLayout($psLayout);
     $titleLayout->addLayout($packageLayout);
     $titleLayout->addLayout($pkgDetailLayout);
     $titleLayout->addLayout($okButtonLayout);
-    $okButtonLayout->addLayout($exitButtonLayout);
+    $okButtonLayout->addLayout($cancelButtonLayout);
     $mainLayout->addLayout($titleLayout);
     this->setLayout($mainLayout);
 }
@@ -245,6 +250,7 @@ sub refreshPackageSetComboBox
 #########################################################################
 
   # Save the "currently" selected item in the combobox (if anything)
+  my $packageSetComboBox = this->{packageSetComboBox};
   my $lastText = $packageSetComboBox->itemData($packageSetComboBox->currentIndex())->toString();
   print "packageSet current: $lastText\n" if $options{debug};
   $lastText = "Default" if ($lastText eq "");
@@ -289,7 +295,7 @@ sub refreshPackageSetComboBox
 #  Provided.                                                            #
 #########################################################################
 sub makePackageTable(){
-    $packageSetComboBox = this->{packageSetComboBox};
+    my $packageSetComboBox = this->{packageSetComboBox};
     my $lastText = $packageSetComboBox->currentText();
 
     Qt::SelectorTable::removeTable();
@@ -307,15 +313,15 @@ sub manageSetsButton_clicked
 #  Sets form.                                                           #
 #########################################################################
 
-  $manageSetsForm->show();
+  this->{manageSetsForm}->show();
 
 }
 
 #########################################################################
-#  Subroutine: okButton_clicked                                       #
+#  Subroutine: okButton_clicked                                         #
 #  Parameters: None                                                     #
 #  Returns   : Nothing                                                  #
-#  When the okButton is clicked, quit the application.                #
+#  When the okButton is clicked, quit the application.                  #
 #########################################################################
 sub okButton_clicked () {
     # If the GUI is running as the 'Updater', then we need to go through
@@ -350,15 +356,14 @@ sub okButton_clicked () {
 }
 
 #########################################################################
-#  Subroutine: exitButton_clicked                                       #
+#  Subroutine: cancelButton_clicked                                     #
 #  Parameters: None                                                     #
 #  Returns   : Nothing                                                  #
-#  When the exitButton is clicked, quit the application.                #
+#  When the cancelButton is clicked, quit the application.              #
 #########################################################################
-sub exitButton_clicked () {
+sub cancelButton_clicked () {
 
     print "Do nothing!\n";
-    #this->{titleLabel}->setText(trUtf8("New Title"));
     Qt::Application::exit();
 }
 
