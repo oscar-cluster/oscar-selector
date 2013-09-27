@@ -47,8 +47,6 @@ package Qt::SelectorTable;
 #use Qt;
 use QtCore4;
 use QtGui4;
-use Qt::SelectorTableItem;
-use Qt::SelectorCheckTableItem;
 use QtCore4::isa qw( Qt::Widget );
 use QtCore4::slots
     populateTable => ['QString'],
