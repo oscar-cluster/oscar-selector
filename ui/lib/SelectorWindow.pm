@@ -11,7 +11,7 @@
 # Copyright (c) 2005, 2013 The Trustees of Indiana University.  
 #                          All rights reserved.
 #
-# $Id: Selector.pl 9297 2010-09-21 13:34:40Z valleegr $
+# $Id$
 #########################################################################
 # Note that we do not use puic anymore to modify this file. This capability has
 # been lost, therefore we directly modify this file.
