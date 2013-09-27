@@ -4,6 +4,10 @@
 #  This perl package is a subclass of a Qt QTable.  I had to subclass   #
 #  QTable (rather than add a basic QTable in Designer) since I needed   #
 #  control over the checkboxes and the sorting method.                  #
+#  Authors: DongInn Kim (dikim@cs.indiana.edu)                          #
+#  The new SelectorTable package is written with Qt TreeView which has  #
+#  a lot better interface and look and easy to manage ordering the      #
+#  columns in the PackageTable.                                         #
 #########################################################################
 #  This program is free software; you can redistribute it and/or modify
 #  it under the terms of the GNU General Public License as published by
@@ -21,7 +25,7 @@
 #
 #  Copyright (c) 2003      The Board of Trustees of the University of Illinois.
 #                          All rights reserved.
-#  Copyright (c) 2005      The Trustees of Indiana University.  
+#  Copyright (c) 2005,2013 The Trustees of Indiana University.  
 #                          All rights reserved.
 #  Copyright (c) 2007-2009 Geoffroy Vallee <valleegr@ornl.gov>
 #                          Oak Ridge National Laboratory
@@ -30,20 +34,27 @@
 # $Id$
 #########################################################################
 
+
+# The SelectorTable package provides the list of packages of the        #
+# selected PackageSets and detail information of each package on the    #
+# separated tabs (Description, Packagers, Conflicts, Summary).          #
+#########################################################################
 use strict;
+use warnings;
 use utf8;
 
 package Qt::SelectorTable;
-use Qt;
+#use Qt;
+use QtCore4;
+use QtGui4;
 use Qt::SelectorTableItem;
 use Qt::SelectorCheckTableItem;
-use Qt::isa qw(Qt::Table);
-use Qt::slots
-    populateTable => [ 'const QString&' ],
+use QtCore4::isa qw( Qt::Widget );
+use QtCore4::slots
+    populateTable => ['QString'],
     cellValueChanged => [ 'int', 'int' ];
-use Qt::signals deactivate_package_set_combo => [];
+use QtCore4::signals deactivate_package_set_combo => [];
 
-# use lib "$ENV{OSCAR_HOME}/lib";
 use OSCAR::Database;
 use OSCAR::Package;
 use OSCAR::OpkgDB;
@@ -61,195 +72,130 @@ my $packagesInstalled;      # Hash of packages with 'installed' bit set to 1
 my $foundPackagesInstalled; # Has the above hash been calculated once?
 my %scope = ();
 
+my $table;
+my $model;
+my $filterColumnComboBox;
+my %opkg_hashdata = ();
+
 use vars qw ($last_ps);
 
-sub NEW
-{
 #########################################################################
-#  Subroutine: NEW                                                      #
-#  Parameters: (1) Parent of this table                                 #
-#              (2) Name of this table                                   #
-#  Returns   : Reference to a new SelectorTable object.                 #
-#  This is the constructor for the SelectorTable.  It sets up the stuff #
-#  for the table that never changes, like the number of columns,        #
-#  headers, read-only status, etc.  Then it show()s it at the end.      #
-#  The table is organized as follows:                                   #
-#        Col 0       Col 1      Col 2   Col 3                           #
-#        ShortName   LongName   Class   Location/Version                #
-#  Column 0 is HIDDEN.  It's there just so that we have a key for the   #
-#  $allPackages hash.                                                   #
+# create a treeview class to setup a sortfilterproxymodel               #
 #########################################################################
-
-  shift->SUPER::NEW(@_[0..1]);
-
-  setName("SelectorTable") if (name() eq "unnamed");
-
-  setNumCols(5);
-  horizontalHeader()->setLabel(0,"Short Name");
-  horizontalHeader()->setLabel(1,"");
-  horizontalHeader()->setLabel(2,"Package Name");
-  horizontalHeader()->setLabel(3,"Class");
-  horizontalHeader()->setLabel(4,"Version");
-  hideColumn(0);
-  setShowGrid(0);
-  verticalHeader()->hide();   # Get rid of the numbers along the left side
-  setLeftMargin(0);
-  setSelectionMode(Qt::Table::SingleRow());
-  setFocusStyle(Qt::Table::FollowStyle());
-  setColumnMovingEnabled(0);
-  setRowMovingEnabled(0);
-  setSorting(1);              # Sort method overridden below
-  setColumnStretchable(1,0);
-  setColumnStretchable(2,0);
-  setColumnStretchable(3,1);
-  setColumnStretchable(4,1);
-  setColumnReadOnly(1,0);
-  setColumnReadOnly(2,1);
-  setColumnReadOnly(3,1);
-  setColumnReadOnly(4,1);
-  adjustColumn(1);            # Auto-set width of column 1
-  adjustColumn(2);            # Auto-set width of column 2
-
-  # Create colors needed by the table when the GUI is run as the 'Updater'
-  Qt::SelectorUtils::createColors();
-
-  # When the value of any cell changes, call cellValueChanged to 
-  # catch checkboxes on/off.
-  Qt::Object::connect(this, SIGNAL 'valueChanged(int,int)',
-                            SLOT   'cellValueChanged(int,int)');
- 
-  show();
+sub NEW {
+    shift->SUPER::NEW();
+    my $proxyModel = Qt::SortFilterProxyModel();
+    this->{proxyModel} = $proxyModel;
+    $proxyModel->setDynamicSortFilter(1);
+    $table = Qt::TreeView();
+    this->{proxyView} = $table;
+    $table->setRootIsDecorated(0);
+    $table->setAlternatingRowColors(1);
+    $table->setModel($proxyModel);
+    $table->setSortingEnabled(1);
 }
 
-sub sortColumn
-{
 #########################################################################
-#  Subroutine: sortColumn                                               #
-#  Parameters: (1) Column number that was clicked (0-indexed)           #
-#              (2) Ascending (= 1) or descending (= 0)                  #
-#              (3) Sort whole rows (= 1) or just the one column (= 0)   #
-#  Returns   : Nothing                                                  #
-#  This subroutine overrides the default sortColumn method in the Table #
-#  super class.  Basically, we always want to sort whole rows when one  #
-#  of the column headings is clicked.                                   #
+# Subroutine: getModel                                                  #
+# Parameters: super class                                               #
+# Returns   : StandardItemModel                                         #
+# Add a StandardItemModel to setup the PackageTable header              #
 #########################################################################
-
-  my $col = shift;
-  my $ascending = shift;
-  my $wholeRows = shift;
-
-  my $currPack = "";
-
-  # When the checkbox column header is clicked, sort based on long name instead
-  $col = 2 if ($col == 1);
-
-  # If we have a row selected, we need to unselect it and reselect it
-  # later since it's row number will probably have changed after sorting.
-  if (numSelections() == 1)
-    {
-      $currPack = item(selection(0)->bottomRow(),0)->text();
-      clearSelection(1);
-    }
-
-  # Do the actual sorting by calling the parent's sortColumn routine
-  SUPER->sortColumn($col,$ascending,1);
-
-  # If we had a row selected, select the new row where the package is now.
-  if ($currPack)
-    { # Search for the new row number of the selected package
-      my $found = 0;
-      my $currRow = 0;
-      while ((!$found) && ($currRow < numRows()))
-        {
-          $found = 1 if (item($currRow,0)->text() eq $currPack);
-          $currRow++ if (!$found);
-        }
-
-      # If we found the package's new row, create a selection for it.
-      if ($found)
-        { 
-          my $sel = Qt::TableSelection();
-          $sel->init($currRow,0);
-          $sel->expandTo($currRow,4);
-          addSelection($sel);
-        }
-    }
+sub getModel ($){
+    my ($parent) = @_;
+    $model = Qt::StandardItemModel(0, 4, $parent);
+    #$model->setHeaderData(0, Qt::Horizontal(), Qt::Variant(Qt::Object::tr('Short Name')));
+    $model->setHeaderData(0, Qt::Horizontal(), Qt::Variant(Qt::String('')));
+    $model->setHeaderData(1, Qt::Horizontal(), Qt::Variant(Qt::String('Package Name')));
+    $model->setHeaderData(2, Qt::Horizontal(), Qt::Variant(Qt::String('Class')));
+    $model->setHeaderData(3, Qt::Horizontal(), Qt::Variant(Qt::String('Version')));
+    this->{model} = $model;
+    return $model;
 }
 
-# DEPRECATED??
-# sub getPackagesInPackageSet
-# {
-# #########################################################################
-# #  Subroutine: getPackagesInPackageSet                                  #
-# #  Parameter : Name of a package set.                                   #
-# #  Returns   : A hash reference containing which packages are (set) in  #
-# #              that package set.                                        #
-# #  Call this subroutine when you need to find out which packages are    #
-# #  "selected" in a given package set.  The results are returned in a    #
-# #  hash references with the keys being the (short) names of the         #
-# #  packages and the values are '1's for those packages.  So you will    #
-# #  need to do a "if (defined $href->{$package})" to find out if the     #
-# #  $package is in the package set.                                      #
-# #########################################################################
-# # !!WARNING!! This is not the final code. Currently we do not use the
-# # database which is only a temporary solution.
-# #########################################################################
-#   
-#     my $packageSet = shift;
-# 
-#     # Get the list of packages in the given package set and create a
-#     # hash where the keys are the (short) names of the packages and the
-#     # values are "1"s for those packages.
-#     my @packagesInSet;
-#     my %packagesInSet;
-#     my $success = OSCAR::Database::get_selected_group_packages(
-#         \@packagesInSet, \%options, \@errors, $packageSet, undef);
-# #    @packagesInSet = get_list_opkgs_in_package_set($packageSet);
-# 
-# 
-#     foreach my $pack_ref (@packagesInSet) {
-#         $packagesInSet{$$pack_ref{package}} = 1;
-#     }
-# 
-#     return \%packagesInSet;
-# }
-# 
-# sub getPackagesInstalled
-# {
-# #########################################################################
-# #  Subroutine: getPackagesInstalled                                     #
-# #  Parameters: None                                                     #
-# #  Returns   : A hash reference containing which packages are currently #
-# #              installed (according to their 'installed' bit.           #
-# #  Call this subroutine when you need to find out which packages are    #
-# #  "installed".  The results are returned in a hash references with     #
-# #  the keys being the (short) names of the packages and the values      #
-# #  are '1's for those packages which are installed.  So you will        #
-# #  need to do a "if (defined $href->{$package})" to find out if the     #
-# #  $package is installed.                                               #
-# #########################################################################
-# 
-#   if (!$foundPackagesInstalled)
-#     { # Really only need to call once per run
-#       $foundPackagesInstalled = 1;
-#       # Get the list of packages installed and create a hash where the keys 
-#       # are the (short) names of the packages and the values are "1"s for 
-#       # those packages.
-#       my @packagesInstalled;
-#       my $success = OSCAR::Database::get_node_package_status_with_node(
-#           "oscar_server",\@packagesInstalled,\%options,\@errors, 8 );
-#       if ($success)
-#         { # Transform the array of installed packages into a hash
-#           foreach my $pack_ref (@packagesInstalled)
-#             {
-#               my $pack = $$pack_ref{package};
-#               $packagesInstalled->{$pack} = 1;
-#             }
-#         }
-#     }
-# 
-#   return $packagesInstalled;
-# }
+#########################################################################
+# Subroutine: setSourceModel                                            #
+# Parameters: StandardItemModel                                         #
+# Returns   : SortFilterProxyModel                                      #
+# Add a StandardItemModel on top of the SortFilterProxyModel.           #
+#########################################################################
+sub setSourceModel {
+    my ( $lmodel ) = @_;
+    my $proxyModel = this->{proxyModel};
+    my $proxyView = this->{proxyView};
+    $proxyModel->setSourceModel($lmodel);
+    $proxyView->setModel($lmodel);
+    return $proxyView;
+}
+
+#########################################################################
+# Subroutine: getPackageTable                                           #
+# Parameters: None                                                      #
+# Returns   : PackageTable (TreeView)                                   #
+# Provide the prepared PackageTable for Selector                        #
+#########################################################################
+sub getPackageTable (){
+
+    $table = Qt::TreeView();
+    $table->setAlternatingRowColors(1);
+    $model = this->{model};
+    $table->setModel($model);
+    return $table;
+}
+
+#########################################################################
+# Subroutine: getLayout                                                 #
+# Parameters: PackageTable                                              #
+# Returns   : HBoxLayout                                                #
+# Attach the PackageTable widget to HBoxLayout which is used for        #
+# Selector Window.                                                      #
+#########################################################################
+sub getLayout ($){
+    my $packageTable = shift;
+    my $proxyLayout = Qt::HBoxLayout();
+    $proxyLayout->addWidget($packageTable);
+    return $proxyLayout;
+}
+
+# We do not have a clean way to clean the widget that displays OPKGs data so we
+# simply deactivate the package set combo list when the user select a package
+# set. For that, we emit a signal and treat the signal here. We use a signal
+# because this object is the only one to have a pointer to the combo, the class
+# dealing with the table object is in SelectorTable.pm.
+sub do_deactivate_package_set_combo {
+    packageSetComboBox->clear();
+}
+
+#########################################################################
+# Subroutine: removeTable                                               #
+# Parameters: None                                                      #
+# Returns   : None                                                      #
+# Clean up the PackageTable with the old contents and make the table    #
+# ready for the new contents.                                           #
+#########################################################################
+sub removeTable{
+    $model->removeRows(0,$model->rowCount());
+}
+
+#########################################################################
+# Subroutine: addPackage                                                #
+# Parameters: model, check, packageName, class, version                 #
+# Returns   : None                                                      #
+# Add a package to StanardItemModel with the given arguments.           #
+#########################################################################
+sub addPackage{
+    my ( $model, $check, $pName, $class, $version) = @_;
+    $model->insertRow(0);
+    my $item0 = Qt::StandardItem();
+    $item0->setCheckable(1);
+    my $check_state = ($check?Qt::Checked():Qt::Unchecked());
+    $item0->setCheckState($check_state);
+    $model->setItem(0, 0, $item0);
+    #$model->setData($model->index(0, 0), Qt::Variant($check));
+    $model->setData($model->index(0, 1), Qt::Variant(Qt::String($pName)));
+    $model->setData($model->index(0, 2), Qt::Variant(Qt::String($class)));
+    $model->setData($model->index(0, 3), Qt::Variant(Qt::String($version)));
+}
 
 #########################################################################
 #  Subroutine: populateTable                                            #
@@ -264,13 +210,15 @@ sub sortColumn
 #  "activated" signal so that when a new package set is chosen, the     #
 #  checkbox info is updated appropriately.                              #
 #########################################################################
-sub populateTable ($$) {
-    $currSet = shift;    # The package set selected in the ComboBox
-    my $packageSetComboBox = shift;
+sub populateTable {
+    my $passedText = shift;
+
+    $last_ps = "";
+    $currSet = ($passedText?$passedText:"Default");# The package set selected in the ComboBox
     my $success;         # Return result for database commands
 
-    print STDERR "Current set: $currSet\n";
-    print STDERR "Last set: $last_ps\n" if defined $last_ps;
+    print STDERR "Current set: $currSet\n" if defined $passedText;
+    print STDERR "Last set: $passedText\n" if defined $passedText;
 
     # If the selection is empty (it happens when Selector runs for the first
     # time), we just exit (thus the window appears quickly, especially if remote
@@ -279,15 +227,8 @@ sub populateTable ($$) {
         return;
     }
 
-    # We currently do not allow the consecutive selection of different package
-    # sets because of a bug in the refreshing of few widgets.
-    if (defined $last_ps) {
-        print STDERR "Deactivating the package set selection combox\n";
-        emit deactivate_package_set_combo();
-    }
-
     # Check if we really need to update the table.
-    if (!defined $last_ps || $last_ps ne $currSet) {
+    if ($last_ps ne $passedText) {
         $last_ps = $currSet;
 
         # We get the list of OPKGs in the package set
@@ -308,385 +249,141 @@ sub populateTable ($$) {
         require OSCAR::RepositoryManager;
         my $rm = OSCAR::RepositoryManager->new (distro=>$distro);
         my @core_opkgs = OSCAR::Opkg::get_list_core_opkgs ();
+
         foreach my $opkg (@available_opkgs) {
             my ($rc, %opkg_data) = $rm->show_opkg ("opkg-$opkg");
 
-            setNumRows($rownum+1); 
 
             # Column 0 contains "short" names of packages
-            my $item = SelectorTableItem(this,Qt::TableItem::Never(), $opkg);
-            setItem($rownum, 0, $item);
+            #my $item = SelectorTableItem(this,Qt::TableItem::Never(), $opkg);
+            #setItem($rownum, 0, $item);
 
             # Column 1 contains checkboxes
-            my $checkbox = SelectorCheckTableItem(this,"");
-            setItem($rownum, 1, $checkbox);
+            my $checkbox = 0;
             if ($selection_data{$opkg} == OSCAR::ODA_Defs::SELECTED()) {
-                $checkbox->setChecked(1);
+                $checkbox = 1;
             }
 
             # Column 2 contains the long names of packages
-            $item = SelectorTableItem(this, Qt::TableItem::Never(), $opkg);
-            setItem($rownum, 2, $item);
+            print "$currSet: $opkg\n"; # if $options{debug};
+            
 
             # Column 3 contains the "class" of packages
             my $opkg_class;
             if (OSCAR::Utils::is_element_in_array ($opkg, @core_opkgs) == 1) {
                 $opkg_class = "Core";
                 # Core OPKGs are always selected!
-                $checkbox->setChecked(1);
+                $checkbox = 1;
             } else {
                 $opkg_class = "Included";
             }
-            $item = SelectorTableItem(this,Qt::TableItem::Never(), $opkg_class);
-            setItem($rownum,3,$item);
 
             # Column 4 contains the Location + Version
-            $location = $opkg_data{"opkg-$opkg"}{repository};
+            #$location = $opkg_data{"opkg-$opkg"}{repository};
             $version = $opkg_data{"opkg-$opkg"}{version};
-            $item = SelectorTableItem(this,Qt::TableItem::Never(),
-                                      $location . " " . $version);
-            setItem($rownum,4,$item);
+            addPackage($model, $checkbox, $opkg, $opkg_class, $version);
 
             $rownum++;
+            $opkg_hashdata{$opkg} = \%opkg_data;
         }
-
-        # Finally, sort the table by Package Name and then by Class and
-        # set its size automatically
-        sortColumn(2,1,1);
-        sortColumn(3,1,1);
-        adjustColumn(1);
-        adjustColumn(2);
+        this->{numRows} = $rownum;
     }
+    $table->sortByColumn(1, Qt::AscendingOrder());
+    $table->resizeColumnToContents(0);
+    $table->resizeColumnToContents(1);
+    $table->resizeColumnToContents(2);
 
-    if (defined $last_ps) {
-        print STDERR "Deactivating the package set selection combox\n";
-        emit deactivate_package_set_combo();
-    }
     return 0;
 }
 
-# sub isPackageInPackageSet
-# {
-# #########################################################################
-# #  Subroutine: isPackageInPackageSet                                    #
-# #  Parameter : (1) The package we are looking for                       #
-# #              (2) The package set we are checking                      #
-# #  Returns   : 1 if the package is in the package set, 0 otherwise      #
-# #  This function takes in the (short) name of a package and the name    #
-# #  of a package set.  It returns 1 (true) if the package is in that     #
-# #  package set.                                                         #
-# #########################################################################
-# 
-#   my $package = shift;
-#   my $packageSet = shift;
-#   my $packagesInSet;
-# 
-#   $packagesInSet = getPackagesInPackageSet($packageSet);
-#   return ((defined $packagesInSet->{$package}) &&
-#           ($packagesInSet->{$package} == 1));
-# }
+sub getNumRows(){
+    return this->{numRows};
+}
 
-sub setCheckBoxForPackage
-{
 #########################################################################
-#  Subroutine: setCheckBoxForPackage                                    #
-#  Parameter : (1) The (short) name of the package to check/uncheck.    #
-#              (2) Whether to check (1) or uncheck (0) the CheckBox.    #
-#  Returns   : Nothing                                                  #
-#  This subroutine allows you to check or uncheck the checkbox of a     #
-#  particular package.  It also does the work of disconnecting the      #
-#  signal/slot temporarily so that cellValueChanged doesn't get called  #
-#  upon checking/unchecking a checkbox.                                 #
+# Subroutine: getPackageDetail                                          #
+# Parameters: None                                                      #
+# Returns   : None                                                      #
+# Create a TabWidget and several tabs and then add the tabs to tabWidget#
+# When the tabWidget is fully generated, the widget is added to the     #
+# HBoyLayout so that it can show up on the Selector main window.        #
 #########################################################################
+sub getPackageDetail {
+    my $tabWidget = Qt::TabWidget();
+    this->{tabWidget} = $tabWidget;
 
-  my $package = shift; 
-  my $checkit = shift;
+    my $informationTab = Qt::TextEdit();
+    $informationTab->setReadOnly(1);
+    this->{informationTab} = $informationTab;
+    my $packagerTab = Qt::TextEdit();
+    $packagerTab->setReadOnly(1);
+    this->{packagerTab} = $packagerTab;
+    my $conflictsTab = Qt::TextEdit();
+    $conflictsTab->setReadOnly(1);
+    this->{conflictsTab} = $conflictsTab;
+    my $summaryTab = Qt::TextEdit();
+    $summaryTab->setReadOnly(1);
+    this->{summaryTab} = $summaryTab;
+    $tabWidget->addTab($informationTab, this->tr('Description'));
+    $tabWidget->addTab($packagerTab, this->tr('Packager'));
+    $tabWidget->addTab($conflictsTab, this->tr('Conflicts'));
+    $tabWidget->addTab($summaryTab, this->tr('Summary'));
 
-  # First, find the row corresponding to the given $package
-  my $row = 0;
-  my $found = 0;
-  while ($row < numRows() && !$found)
-    {
-      if (text($row,0) eq $package)
-        {
-          $found = 1;
-        }
-      else
-        {
-          $row++;
-        }
-    }
+    my $mainLayout = Qt::HBoxLayout();
+    $mainLayout->addWidget($tabWidget);
+    return $mainLayout;
+}
 
-  # We found the package's row - check/uncheck the box, making sure
-  # that all signals are disabled before and re-enabled after.
-  if ($found)
-    {
-      blockSignals(1);
-      item($row,1)->setChecked($checkit);
-      blockSignals(0);
+#########################################################################
+# Subroutine: pushPkgDetailInfo                                         #
+# Parameters: pkgName                                                   #
+# Returns   : None                                                      #
+# Fill up the tabs with the package information which is retrieved from #
+# the opkg_hashdata. The Package detail information is paired with the  #
+# its package name in the opkg_hashdata.                                #
+# opkg_hashdata (key: pkgName, value: pkg detail information)           #
+#########################################################################
+sub pushPkgDetailInfo {
+    my $pkgName = shift;
+
+    my %opkg_hash = ();
+
+    my $informationTab = this->{informationTab};
+    my $packagerTab = this->{packagerTab};
+    my $conflictsTab = this->{conflictsTab};
+    my $summaryTab = this->{summaryTab};
+   
+    OSCAR::Utils::print_hash("","Opkg_hashdata", \%opkg_hashdata) if $options{debug};
+    if (%opkg_hashdata){
+        my $pkg_hashref = $opkg_hashdata{$pkgName};
+        %opkg_hash = %$pkg_hashref;
+        OSCAR::Utils::print_hash("","Opkg_hash", \%opkg_hash) if $options{debug};
+        setValue($informationTab, $opkg_hash{"opkg-$pkgName"}{'description'});
+        setValue($packagerTab, $opkg_hash{"opkg-$pkgName"}{'packager'});
+        setValue($conflictsTab, $opkg_hash{"opkg-$pkgName"}{'conflicts'});
+        setValue($summaryTab, $opkg_hash{"opkg-$pkgName"}{'summary'});
+    }else{
+        setValue($informationTab, "");
+        setValue($packagerTab, "");
+        setValue($conflictsTab, "");
+        setValue($summaryTab, "");
     }
 }
 
-sub cellValueChanged
-{
 #########################################################################
-#  Subroutine: cellValueChanged                                         #
-#  Parameter : (1) The row of the changed table cell.                   #
-#              (2) The column of the changed table cell.                #
-#  Returns   : Nothing                                                  #
-#  This slot is called when the value of one of the packageTable's      #
-#  cells is changed.  We then call the appropriate subroutine depending #
-#  on if the GUI is being run as the 'Selector' or as the 'Updater'.    #
-#  Note that this method gets called not only when the user clicks on   #
-#  one of the checkboxes, but also when the user selects a new row.     #
-#  So take action only when clicked on a checkbox.                      #
+# Subroutine: setValue                                                  #
+# Parameters: passedTab, value                                          #
+# Returns   : None                                                      #
+# The package detail information is saved to the passed tab (e.g.,      #
+# Description, Packager, Conflicts, and Summary)                        #
+# its package name in the opkg_hashdata.                                #
+# opkg_hashdata (key: pkgName, value: pkg detail information)           #
 #########################################################################
-
-  my $row = shift;
-  my $col = shift;
-
-  # Column 1 contains the checkboxes.  Don't do anything for other boxes.
-  return if ($col != 1);  
-
-  # We don't want to allow the user to uncheck core packages.  
-  # So, when a core checkbox is clicked, make sure it's checked.
-  my $class = item($row,3)->text();
-  if (($class eq 'core' || $class eq "Core") &&
-      (!(item($row,1)->isChecked())))
-    {
-      setCheckBoxForPackage(item($row,0)->text(),1);
-      return;
-    }
-
-  # Then take appropriate action for the checkbox depending on if the 
-  # GUI is running as the 'Selector' or as the 'Updater'. 
-  (parent()->parent()->installuninstall > 0) ?
-    checkboxChangedForUpdater($row) : checkboxChangedForSelector($row);
-}
-
-sub checkboxChangedForSelector
-{
-#########################################################################
-#  Subroutine: checkboxChangedForSelector                               #
-#  Parameter : The row of the changed table checkbox                    #
-#  Returns   : Nothing                                                  #
-#  This slot is called when the value of one of the packageTable's      #
-#  checkboxes is changed and the GUI is running at the 'Selector'.      #
-#  We need to catch when the checkboxes are checked/unchecked so that   #
-#  we can add/delete the appropriate package from the current           #
-#  package set.                                                         #
-#########################################################################
-
-  my $row = shift;
-
-  my $success;  # Value returned by database commands
-
-#   my $allPackages = SelectorUtils::getAllPackages();
-# #  my @opkgs = OSCAR::OpkgDB::opkg_list_available(%scope);
-#   my $donothing = 0;
-#   my($reqhash,$conhash,$reqkey,$conkey);
-# 
-#   # If we clicked on a checkbox, we should try to add/remove the 
-#   # corresponding package from the current package set.
-#   my $packagesInSet = getPackagesInPackageSet($currSet);
-#   my $package = item($row,0)->text();
-#   if (item($row,1)->isChecked())
-#     { 
-#       # Find out if the package is in the package set or not
-#       if ((!(defined $packagesInSet->{$package})) || 
-#           ($packagesInSet->{$package} != 1))
-#         { # Package is NOT in the package set but should be -> add it!
-#           # Check for requires AND conflicts.
-#           # First, get list of recursively required packages for checkbox.
-#           $reqhash = SelectorUtils::getRequiresList($reqhash,$package);
-#           # Add in any 'core' packages which are selected since they are
-#           # always required and should never have any conflicts (i.e.
-#           # become unselected).
-#           foreach my $pkg (keys %{ $allPackages })
-# #          foreach my $pkg (@opkgs)
-#             {
-#               $reqhash->{$pkg} = 1 if 
-#                 ((defined $allPackages->{$package}{class}) &&
-#                  ($allPackages->{$package}{class} eq 'core'));
-#             }
-# 
-#           # Get a list of packages conflicting with the required ones.
-#           $conhash = SelectorUtils::getConflictsList($reqhash);
-# 
-#           # Check to see if the conflicts and the requires list coincide
-#           foreach $conkey (keys %{ $conhash })
-#             {
-#               if ($reqhash->{$conkey})
-#                 { # ERROR! Conflict - print error message and do nothing
-#                   Carp::carp("ERROR! Package $conkey is required by AND " .
-#                              "conflicts with $package");
-#                   $donothing = 1;
-#                 }
-#             }
-# 
-#           # If there was no conflict, then select/unselect checkboxes
-#           if (!$donothing)
-#             { # Select all of the 'requires'
-#               foreach $reqkey (keys %{ $reqhash })
-#                 {
-#                   setCheckBoxForPackage($reqkey,1);
-#                   # Add the package to the package set if necessary
-#                   if ((!(defined $packagesInSet->{$reqkey})) || 
-#                       ($packagesInSet->{$reqkey} != 1))
-#                     {
-#                       $success = OSCAR::Database::set_group_packages(
-#                             $currSet,$reqkey,2,\%options,\@errors);
-#                       Carp::carp("Could not do oda command 
-#                         'set_group_packages $reqkey $currSet'") if 
-#                           (!$success);
-#                       $packagesInSet->{$reqkey} = 1;
-#                     }
-#                 }
-#               # Unselect all of the 'conflicts'
-#               foreach $conkey (keys %{ $conhash })
-#                 {
-#                   setCheckBoxForPackage($conkey,0);
-#                   # Remove the package from the package set if necessary
-#                   if ((defined $packagesInSet->{$conkey}) &&
-#                       ($packagesInSet->{$conkey} == 1))
-#                     {
-#                       $success = OSCAR::Database::delete_group_packages(
-#                         $currSet,$conkey,\%options,\@errors);
-#                       Carp::carp("Could not do oda command 'delete_group_packages".
-#                         " $conkey $currSet'") if 
-#                           (!$success);
-#                       undef $packagesInSet->{$conkey};
-#                     }
-#                   
-#                 }
-#             }
-# 
-#           # Finally, add the checked package to the current package set
-#           if ((!(defined $packagesInSet->{$package})) || 
-#               ($packagesInSet->{$package} != 1))
-#             {
-#               $success = OSCAR::Database::set_group_packages(
-#                     $currSet,$package,2,\%options,\@errors);
-#               Carp::carp("Could not do oda command 
-#                 'set_group_packages $package $currSet'") if(!$success);
-#             }
-#         }
-#     }
-#   else # Checkbox is not checked
-#     {
-#       # Find out if the package is in the package set or not
-#       if ((defined $packagesInSet->{$package}) || 
-#           ($packagesInSet->{$package} == 1))
-#         { # Package IS in the package set but should NOT be -> remove it!
-#           # Check for things that require it and unselect all of those
-#           # checkboxes EXCEPT for those buttons that are 'core'.
-#           $reqhash = SelectorUtils::getIsRequiredByList($reqhash,$package);
-#           foreach $reqkey (keys %{ $reqhash })
-#             {
-#               if (!((defined $allPackages->{$reqkey}{class}) &&
-#                     ($allPackages->{$reqkey}{class} eq 'core')))
-#                 {
-#                   setCheckBoxForPackage($reqkey,0);
-#                   if ((defined $packagesInSet->{$reqkey}) || 
-#                       ($packagesInSet->{$reqkey} == 1))
-#                     {
-#                       $success = OSCAR::Database::delete_group_packages(
-#                         $currSet,$reqkey,\%options,\@errors);
-#                       Carp::carp("Could not do oda command 
-#                         'delete_group_packages " .
-#                           "$reqkey $currSet'") if (!$success);
-#                       undef $packagesInSet->{$reqkey};
-#                     }
-#                 }
-#             }
-# 
-#           # Finally, remove the unchecked box from the current package set
-#           if ((defined $packagesInSet->{$package}) || 
-#               ($packagesInSet->{$package} == 1))
-#             {
-#               $success = OSCAR::Database::delete_group_packages(
-#                 $currSet,$package,\%options,\@errors);
-#               Carp::carp("Could not do oda command 'delete_group_packages".
-#                 " $package $currSet'") if 
-#                   (!$success);
-#             }
-#         }
-#     }
-}
-
-sub checkboxChangedForUpdater
-{
-#########################################################################
-#  Subroutine: checkboxChangedForUpdater                                #
-#  Parameter : The row of the changed table checkbox                    #
-#  Returns   : Nothing                                                  #
-#  This slot is called when the value of one of the packageTable's      #
-#  checkbox is changed and the GUI is running as the 'Updater'.         #
-#  We need to catch when the checkboxes are checked/unchecked so that   #
-#  we can do requires/conflicts testing.                                #
-#########################################################################
-
-  my $row = shift;
-
-  my $allPackages = SelectorUtils::getAllPackages();
-  my $donothing = 0;
-  my($reqhash,$conhash,$reqkey,$conkey);
-
-  my $package = item($row,0)->text();
-
-  # If we clicked on a checkbox, we should try to add/remove the 
-  # corresponding package from the current package set.
-  if (item($row,1)->isChecked())
-    { # Checkbox has been checked.
-      # Check for requires AND conflicts for the package.
-      $reqhash = SelectorUtils::getRequiresList($reqhash,$package);
-      $conhash = SelectorUtils::getConflictsList($reqhash);
-
-      # Check to see if the conflicts and the requires list coincide
-      foreach $conkey (keys %{ $conhash })
-        {
-          if ($reqhash->{$conkey})
-            { # ERROR! Conflict - print error message and do nothing
-              Carp::carp("ERROR! Package $conkey is required by AND " .
-                         "conflicts with $package");
-              $donothing = 1;
-            }
-        }
-
-      # If there was no conflict, then select/unselect checkboxes
-      if (!$donothing)
-        { # Select all of the 'requires'
-          foreach $reqkey (keys %{ $reqhash })
-            {
-              setCheckBoxForPackage($reqkey,1);
-            }
-          # Unselect all of the 'conflicts'
-          foreach $conkey (keys %{ $conhash })
-            {
-              setCheckBoxForPackage($conkey,0);
-            }
-        }
-    }
-  else 
-    { # Checkbox has been unchecked
-      # Check for things that require it and unselect all of those
-      # checkboxes EXCEPT for those buttons that are 'core'.
-      $reqhash = SelectorUtils::getIsRequiredByList($reqhash,$package);
-      foreach $reqkey (keys %{ $reqhash })
-        {
-          if (!((defined $allPackages->{$reqkey}{class}) &&
-                ($allPackages->{$reqkey}{class} eq 'core')))
-            {
-              setCheckBoxForPackage($reqkey,0);
-            }
-        }
-    }
-
-  # We need to repaint the entire row in case there's a new text color.
-  for (my $col = 0; $col < numCols(); $col++)
-    {
-      updateCell($row,$col);
-    }
+sub setValue {
+    my ($passedTab, $value) = @_;
+    print "passed value: $value\n" if $options{debug};
+    $passedTab->clear();
+    $passedTab->setText($value);
 }
 
 1;

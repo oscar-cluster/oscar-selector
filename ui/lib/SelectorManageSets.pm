@@ -3,9 +3,12 @@
 # Created: Wed Oct 29 21:10:57 2003
 #      by: The PerlQt User Interface Compiler (puic)
 #
+# Converted perlQt3 to perlQt4
+# Date: Sun Sep 22 21:10:58 2013
+#   by: DongInn Kim (dikim@cs.indiana.edu)
 #
-# Copyright (c) 2005 The Trustees of Indiana University.  
-#                    All rights reserved.
+# Copyright (c) 2005, 2013 The Trustees of Indiana University.  
+#                          All rights reserved.
 #
 # $Id$
 #########################################################################
@@ -19,10 +22,10 @@ use utf8;
 
 
 package Qt::SelectorManageSets;
-use Qt;
-use Qt::isa qw(Qt::Dialog);
+use QtCore4;
+use QtCore4::isa qw(Qt::Dialog);
 use Data::Dumper;
-use Qt::slots
+use QtCore4::slots
     refreshPackageSetsListBox => [],
     createNewPackageSet => [],
     duplicateButton_clicked => [],
@@ -33,19 +36,28 @@ use Qt::slots
     doneButton_clicked => [],
     showEvent => [],
     packageSetsListBox_doubleClicked => ['QListBoxItem*'];
-use Qt::attributes qw(
-    packageSetsListBox
-    duplicateButton
-    renameButton
-    deleteButton
-    newCoreButton
-    newAllButton
-    doneButton
-);
+#use QtCore4::attributes qw(
+#    $packageSetsListBox
+#    duplicateButton
+#    renameButton
+#    deleteButton
+#    newCoreButton
+#    newAllButton
+#    doneButton
+#);
+
+my $packageSetsListBox;
+my $duplicateButton;
+my $renameButton;
+my $deleteButton;
+my $newCoreButton;
+my $newAllButton;
+my $doneButton;
 
 use lib "$ENV{OSCAR_HOME}/lib"; 
 use OSCAR::Database;
-use Qt::signals refreshPackageSets => [];
+use OSCAR::PackageSet;
+use QtCore4::signals refreshPackageSets => [];
 use Qt::SelectorUtils;
 
 my %options = ();
@@ -66,69 +78,66 @@ sub uic_load_pixmap_SelectorManageSets
 
 sub NEW
 {
-    shift->SUPER::NEW(@_[0..3]);
+    shift->SUPER::NEW(@_);
 
-    if( name() eq "unnamed" )
-    {
-        setName("SelectorManageSets");
-    }
     resize(315,227);
-    setCaption(trUtf8("Manage OSCAR Package Sets"));
+    my $title = "Manage OSCAR Package Sets";
+    this->setWindowTitle($title);
+    my $SelectorManageSetsLayout = Qt::GridLayout();
+    my $Layout116 = Qt::HBoxLayout();
 
-    my $SelectorManageSetsLayout = Qt::GridLayout(this, 1, 1, 11, 6, '$SelectorManageSetsLayout');
+    $packageSetsListBox = Qt::ListWidget();
+    $packageSetsListBox->addItem(trUtf8("New Item"));
+    $packageSetsListBox->setToolTip(trUtf8("List of all package sets"));
+    $Layout116->addWidget($packageSetsListBox);
 
-    my $Layout116 = Qt::HBoxLayout(undef, 0, 6, '$Layout116');
+    my $Layout115 = Qt::VBoxLayout();
 
-    packageSetsListBox = Qt::ListBox(this, "packageSetsListBox");
-    packageSetsListBox->insertItem(trUtf8("New Item"));
-    Qt::ToolTip::add(packageSetsListBox, trUtf8("List of all package sets"));
-    $Layout116->addWidget(packageSetsListBox);
+    $duplicateButton = Qt::PushButton();
+    $duplicateButton->setText(trUtf8("D&uplicate"));
+    $duplicateButton->setToolTip(trUtf8("Copy the selected package set to a new package set"));
+    $Layout115->addWidget($duplicateButton);
 
-    my $Layout115 = Qt::VBoxLayout(undef, 0, 6, '$Layout115');
+    $renameButton = Qt::PushButton();
+    $renameButton->setText(trUtf8("&Rename"));
+    $renameButton->setToolTip(trUtf8("Rename the selected package set to a new name"));
+    $Layout115->addWidget($renameButton);
 
-    duplicateButton = Qt::PushButton(this, "duplicateButton");
-    duplicateButton->setText(trUtf8("D&uplicate"));
-    Qt::ToolTip::add(duplicateButton, trUtf8("Copy the selected package set to a new package set"));
-    $Layout115->addWidget(duplicateButton);
+    $deleteButton = Qt::PushButton();
+    $deleteButton->setText(trUtf8("&Delete"));
+    $deleteButton->setToolTip(trUtf8("Delete the selected package set"));
+    $Layout115->addWidget($deleteButton);
 
-    renameButton = Qt::PushButton(this, "renameButton");
-    renameButton->setText(trUtf8("&Rename"));
-    Qt::ToolTip::add(renameButton, trUtf8("Rename the selected package set to a new name"));
-    $Layout115->addWidget(renameButton);
+    $newCoreButton = Qt::PushButton();
+    $newCoreButton->setText(trUtf8("New &Core"));
+    $newCoreButton->setToolTip(trUtf8("Create a new package set with just \"core\" packages"));
+    $Layout115->addWidget($newCoreButton);
 
-    deleteButton = Qt::PushButton(this, "deleteButton");
-    deleteButton->setText(trUtf8("&Delete"));
-    Qt::ToolTip::add(deleteButton, trUtf8("Delete the selected package set"));
-    $Layout115->addWidget(deleteButton);
-
-    newCoreButton = Qt::PushButton(this, "newCoreButton");
-    newCoreButton->setText(trUtf8("New &Core"));
-    Qt::ToolTip::add(newCoreButton, trUtf8("Create a new package set with just \"core\" packages"));
-    $Layout115->addWidget(newCoreButton);
-
-    newAllButton = Qt::PushButton(this, "newAllButton");
-    newAllButton->setText(trUtf8("New &All"));
-    Qt::ToolTip::add(newAllButton, trUtf8("Create a new package set with all packages"));
-    $Layout115->addWidget(newAllButton);
+    $newAllButton = Qt::PushButton();
+    $newAllButton->setText(trUtf8("New &All"));
+    $newAllButton->setToolTip(trUtf8("Create a new package set with all packages"));
+    $Layout115->addWidget($newAllButton);
     my $spacer = Qt::SpacerItem(0, 20, &Qt::SizePolicy::Minimum, &Qt::SizePolicy::Expanding);
     $Layout115->addItem($spacer);
 
-    doneButton = Qt::PushButton(this, "doneButton");
-    doneButton->setText(trUtf8("D&one"));
-    doneButton->setOn(0);
-    Qt::ToolTip::add(doneButton, trUtf8("Close this window"));
-    $Layout115->addWidget(doneButton);
+    $doneButton = Qt::PushButton();
+    $doneButton->setText(trUtf8("D&one"));
+    $doneButton->setToolTip(trUtf8("Close this window"));
+    $Layout115->addWidget($doneButton);
     $Layout116->addLayout($Layout115);
 
     $SelectorManageSetsLayout->addLayout($Layout116, 0, 0);
 
-    Qt::Object::connect(duplicateButton, SIGNAL "clicked()", this, SLOT "duplicateButton_clicked()");
-    Qt::Object::connect(renameButton, SIGNAL "clicked()", this, SLOT "renameButton_clicked()");
-    Qt::Object::connect(deleteButton, SIGNAL "clicked()", this, SLOT "deleteButton_clicked()");
-    Qt::Object::connect(doneButton, SIGNAL "clicked()", this, SLOT "doneButton_clicked()");
-    Qt::Object::connect(packageSetsListBox, SIGNAL "doubleClicked(QListBoxItem*)", this, SLOT "packageSetsListBox_doubleClicked(QListBoxItem*)");
-    Qt::Object::connect(newCoreButton, SIGNAL "clicked()", this, SLOT "newCoreButton_clicked()");
-    Qt::Object::connect(newAllButton, SIGNAL "clicked()", this, SLOT "newAllButton_clicked()");
+    Qt::Object::connect($duplicateButton, SIGNAL "clicked()", this, SLOT "duplicateButton_clicked()");
+    Qt::Object::connect($renameButton, SIGNAL "clicked()", this, SLOT "renameButton_clicked()");
+    Qt::Object::connect($deleteButton, SIGNAL "clicked()", this, SLOT "deleteButton_clicked()");
+    Qt::Object::connect($doneButton, SIGNAL "clicked()", this, SLOT "doneButton_clicked()");
+    # We have not found a solution to get the signal of "doubleClicked()" in ComboBox.
+    #Qt::Object::connect($packageSetsListBox, SIGNAL "doubleClicked()", this, SLOT "packageSetsListBox_doubleClicked(QListBoxItem*)");
+    Qt::Object::connect($newCoreButton, SIGNAL "clicked()", this, SLOT "newCoreButton_clicked()");
+    Qt::Object::connect($newAllButton, SIGNAL "clicked()", this, SLOT "newAllButton_clicked()");
+
+    this->setLayout($SelectorManageSetsLayout);
 }
 
 
@@ -140,16 +149,15 @@ sub refreshPackageSetsListBox
 #  Parameters: None                                                     #
 #  Returns   : Nothing                                                  #
 #  This subroutine should be called anytime you need to refresh the     #
-#  contents of the packageSetsListBox.  For example, when you rename    #
+#  contents of the $packageSetsListBox.  For example, when you rename    #
 #  a package set, delete a package set, or duplicate a package set, the #
 #  list needs to be updated.  This subroutine also emits a signal to    #
 #  let the main window know that the package set list has changed to    #
 #  update its packageSetComboBox.                                       #
 #########################################################################
 
-  SelectorUtils::populatePackageSetList(packageSetsListBox);
-  emit refreshPackageSets();
-
+    Qt::SelectorUtils::populatePackageSetList($packageSetsListBox);
+    emit refreshPackageSets();
 }
 
 sub createNewPackageSet
@@ -175,9 +183,9 @@ sub createNewPackageSet
   do # Check for a unique name
     {
       $nameclash = 0;
-      for (my $count = 0; $count < packageSetsListBox->count(); $count++)
+      for (my $count = 0; $count < $packageSetsListBox->count(); $count++)
         {
-          if (lc(packageSetsListBox->text($count)) eq lc($newSetName))
+          if (lc($packageSetsListBox->takeItem($count)->text()) eq lc($newSetName))
             { # Found the name in the list.  Append another "copy".
               $nameclash = 1;
               $newSetName .= "_copy";
@@ -207,9 +215,11 @@ sub duplicateButton_clicked
 #########################################################################
 
   # Check to see if we actually have something selected in the listbox
-  if (packageSetsListBox->currentItem() >= 0)
+  if ($packageSetsListBox->currentRow() >= 0)
     {
-      my $lastSet = packageSetsListBox->currentText();
+      #my $item = Qt::ListWidgetItem($packageSetsListBox);
+      #my $lastSet = $item->toElement()->currentText();
+      my $lastSet = $packageSetsListBox->currentItem()->text();
       my $newSet = $lastSet."_copy";
       my $currSet = createNewPackageSet($newSet);
 
@@ -250,7 +260,7 @@ sub duplicateButton_clicked
 sub renameButton_clicked
 {
   # Check to see if we actually have something selected in the listbox
-  if (packageSetsListBox->currentItem() >= 0)
+  if ($packageSetsListBox->currentRow() >= 0)
     {
       my $response;
       my $foundit;
@@ -258,28 +268,29 @@ sub renameButton_clicked
       my $success;
       my $error = 0;
       my $ok = 0;
-      my $outputstr = "Enter a new name for '" . 
-                      packageSetsListBox->currentText() . "':";
+      my $currentStr = $packageSetsListBox->currentItem->text();
+      my $outputstr = "Enter a new name for '$currentStr':";
       do # Keep prompting the user for a new name until success
         {
           $ok = 0;  # Was the OK button pressed, or the Cancel button?
           $error = 0;
-          $response = Qt::InputDialog::getText("Rename Package Set",
-                        $outputstr, Qt::LineEdit::Normal(), "", $ok, this);
+          $response = Qt::InputDialog::getText(this, this->tr("Rename Package Set"),
+                        $outputstr, Qt::LineEdit::Normal(), $currentStr, $ok);
           require OSCAR::Utils;
           $response = OSCAR::Utils::compactSpaces($response, 1, 0);
           $response =~ s/ /_/g; # Change spaces to underscores
+          print "BABO OK: $ok\n";
 
           if (($ok) && (length($response) > 0))
             {
               # Check to see if the new string already exists
               $foundit = 0;
               for ($count=0; 
-                   ($count < packageSetsListBox->count()) && (!$foundit); 
+                   ($count < $packageSetsListBox->count()) && (!$foundit); 
                    $count++)
                 {
                   $foundit = 1 if 
-                    (lc(packageSetsListBox->text($count)) eq lc($response));
+                    (lc($packageSetsListBox->takeItem($count)->text()) eq lc($response));
                 }
 
               if ($foundit)
@@ -287,22 +298,24 @@ sub renameButton_clicked
                   $error = 1;
                   $outputstr = "Package Set '$response' already exists. \n" .
                                "Enter a new name for '" . 
-                               packageSetsListBox->currentText() . "':";
+                               $packageSetsListBox->currentText() . "':";
                 }
               else
                 {
-                  my $selected = packageSetsListBox->currentText();
-                  $success = OSCAR::Database::rename_groups($selected,
+                  my $selected = $currentStr;
+                  print "BABO selected:response = ($selected : $response)\n"; 
+                  $success = OSCAR::Database::rename_group($selected,
                             $response,
                             \%options,
                             \@errors);
+                  $success = OSCAR::PackageSet::rename_package_set($selected, $response);
                   if ($success)
                     {
                       refreshPackageSetsListBox();
                     }
                   else
                     {
-                      Carp::carp("Could not do oda command " . 
+                      Carp::carp("Could not rename the package set" . 
                         "'rename_package_set $selected $response'");
                     }
                 }
@@ -311,7 +324,7 @@ sub renameButton_clicked
             { 
               $error = 1;
               $outputstr = "Please try again. \nEnter a new name for '".
-                           packageSetsListBox->currentText(). "':";
+                           $packageSetsListBox->currentText(). "':";
             }
         } while ($error);
     }
@@ -332,10 +345,10 @@ sub deleteButton_clicked
 
   # Make sure that we have at least 2 items in the list 
   # and that at least one of them is selected.
-  if ((packageSetsListBox->currentItem() >= 0) &&
-      (packageSetsListBox->count() > 1))
+  if (($packageSetsListBox->currentItem() >= 0) &&
+      ($packageSetsListBox->count() > 1))
     { 
-      my $selected = packageSetsListBox->currentText();
+      my $selected = $packageSetsListBox->currentText();
       my $success = OSCAR::Database::delete_groups(
             $selected,\%options,\@errors);
       if ($success)

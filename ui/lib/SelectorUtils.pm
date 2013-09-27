@@ -21,8 +21,8 @@
 #
 #  Copyright (c) 2003 The Board of Trustees of the University of Illinois.
 #                     All rights reserved.
-#  Copyright (c) 2005-2007 The Trustees of Indiana University.  
-#                     All rights reserved.
+#  Copyright (c) 2005-2007, 2013 The Trustees of Indiana University.  
+#                                All rights reserved.
 #  Copyright (c) 2007 Geoffroy Vallee <valleegr@ornl.gov>
 #                     Oak Ridge National Laboratory
 #                     All rigths reserved.
@@ -41,7 +41,7 @@ use utf8;
 
 package Qt::SelectorUtils;
 
-use Qt;
+use QtCore4;
 use OSCAR::Database;
 use OSCAR::OpkgDB;
 use OSCAR::OCA::OS_Detect;
@@ -412,11 +412,18 @@ sub populatePackageSetList ($) {
     my @packageSets = OSCAR::PackageSet::get_package_sets();
     # We also include an empty entry, it speeds the widget startup and we do not
     # assume anything about the package set users want by default.
-    unshift (@packageSets, ""); 
+    #unshift (@packageSets, ""); 
+    my @new_packageSets;
+    foreach(@packageSets){
+        if( ( defined $_) and !($_ =~ /^$/ )){
+            push(@new_packageSets, $_);
+        }
+    }
 
-    foreach my $pkg (sort { lc($a) cmp lc($b) } @packageSets) {
+    foreach my $pkg (sort { lc($a) cmp lc($b) } @new_packageSets) {
         # Insert Package Set names in alphabetical order - ignore case
-        $widget->insertItem($pkg,-1);
+        print "$pkg in PackageSets (SelectorUtils.pm)\n" if $options{debug};
+        $widget->addItem($pkg);
     }
 
     emit Qt::SelectorManageSets::refreshPackageSets();

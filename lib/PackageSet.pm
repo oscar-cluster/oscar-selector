@@ -4,6 +4,9 @@ package OSCAR::PackageSet;
 #                         Oak Ridge National Laboratory
 #                         All rights reserved.
 #
+# Copyright (c) 2013 The Trustees of Indiana University.  
+#                    All rights reserved.
+
 #   $Id: PackageSet.pm 4833 2006-05-24 08:22:59Z bli $
 #
 #   This program is free software; you can redistribute it and/or modify
@@ -46,6 +49,7 @@ use Carp;
             get_package_sets
             get_opkgs_path_from_package_set
             new_package_set
+            rename_package_set
             );
 
 my $verbose = $ENV{OSCAR_VERBOSE};
@@ -351,6 +355,18 @@ sub new_package_set ($$) {
     }
 
     return 0;
+}
+
+sub rename_package_set ($$) {
+    my ($old_set, $new_set) = @_;
+    my $script = "mv $package_set_dir/$old_set $package_set_dir/$new_set";
+    my $rc = system($script);
+    if ($rc) {
+        my $realrc = $rc >> 8;
+        carp("ERROR: $script exitted badly ($realrc)");
+        return 0;
+    }
+    return 1; 
 }
 
 1;
