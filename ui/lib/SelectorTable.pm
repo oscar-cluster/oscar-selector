@@ -352,7 +352,7 @@ sub pushPkgDetailInfo {
     my $summaryTab = this->{summaryTab};
    
     OSCAR::Utils::print_hash("","Opkg_hashdata", \%opkg_hashdata) if $options{debug};
-    if (%opkg_hashdata){
+    if (%opkg_hashdata and ((defined $pkgName) and ($pkgName ne ""))){
         my $pkg_hashref = $opkg_hashdata{$pkgName};
         %opkg_hash = %$pkg_hashref;
         OSCAR::Utils::print_hash("","Opkg_hash", \%opkg_hash) if $options{debug};
