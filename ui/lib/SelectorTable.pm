@@ -258,7 +258,7 @@ sub populateTable {
 
             # Column 1 contains checkboxes
             my $checkbox = 0;
-            if ($selection_data{$opkg} == OSCAR::ODA_Defs::SELECTED()) {
+            if ($selection_data{$opkg} eq OSCAR::ODA_Defs::SELECTED()) {
                 $checkbox = 1;
             }
 
