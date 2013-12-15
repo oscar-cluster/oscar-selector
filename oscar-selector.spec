@@ -1,10 +1,10 @@
 %define version     1.2.7
-%define release     1
+%define release     3
 
 Summary:        OSCAR Package Selector.
 Name:           oscar-selector
 Version:        1.2.7
-Release:        2
+Release:        3
 Vendor:         Open Cluster Group <http://OSCAR.OpenClusterGroup.org/>
 Distribution:   OSCAR
 Packager:       Geoffroy Vallee <valleegr@ornl.gov>
@@ -12,7 +12,6 @@ License:        GPL
 Group:          Applications/System
 Source:         %{name}.tar.gz
 BuildArch:      noarch
-AutoReqProv: 	no
 Requires:	oscar-base-lib
 Requires:	orm
 BuildRequires:	perl
@@ -51,6 +50,8 @@ Qt graphical user interface for OSCAR Selector.
 %{perl_vendorlib}/Qt/*
 
 %changelog
+* Tue Jun 18 2013 Olivier Lahaye <olivier.lahaye@cea.fr> 1.2.7-3
+- Re-enabled automatic dependancies generator.
 * Tue Jun 18 2013 Olivier Lahaye <olivier.lahaye@cea.fr> 1.2.7-2
 - Added Build requires (perl for pod2man)
 - Missing build dep: dblatex and sgmltools-lite for doc generation.
