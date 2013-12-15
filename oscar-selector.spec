@@ -24,7 +24,6 @@ Summary:        OSCAR Package Selector Qt GUI
 Group:          Applications/System
 Requires:       perl-Qt
 Requires:	oscar-selector
-AutoReqProv:    no
 
 %description
 Set of scripts and Perl modules for the selection of OSCAR package in order to set the software configuration of an OSCAR cluster.
@@ -50,7 +49,7 @@ Qt graphical user interface for OSCAR Selector.
 %{perl_vendorlib}/Qt/*
 
 %changelog
-* Tue Jun 18 2013 Olivier Lahaye <olivier.lahaye@cea.fr> 1.2.7-3
+* Sat Dec 14 2013 Olivier Lahaye <olivier.lahaye@cea.fr> 1.2.7-3
 - Re-enabled automatic dependancies generator.
 * Tue Jun 18 2013 Olivier Lahaye <olivier.lahaye@cea.fr> 1.2.7-2
 - Added Build requires (perl for pod2man)
