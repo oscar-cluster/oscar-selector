@@ -4,7 +4,7 @@
 Summary:        OSCAR Package Selector.
 Name:           oscar-selector
 Version:        1.2.7
-Release:        3
+Release:        4
 Vendor:         Open Cluster Group <http://OSCAR.OpenClusterGroup.org/>
 Distribution:   OSCAR
 Packager:       Geoffroy Vallee <valleegr@ornl.gov>
@@ -47,8 +47,13 @@ Qt graphical user interface for OSCAR Selector.
 %files x11
 %defattr(-,root,root)
 %{perl_vendorlib}/Qt/*
+%exclude %{perl_vendorlib}/Qt/SelectorTableItem.pm
+%exclude %{perl_vendorlib}/Qt/SelectorCheckTableItem.pm
+
 
 %changelog
+* Sat Dec 14 2013 Olivier Lahaye <olivier.lahaye@cea.fr> 1.2.7-4
+- excluded SelectorTableItem.pm SelectorCheckTableItem.pm (unused Qt3 stuffs)
 * Sat Dec 14 2013 Olivier Lahaye <olivier.lahaye@cea.fr> 1.2.7-3
 - Re-enabled automatic dependancies generator.
 * Tue Jun 18 2013 Olivier Lahaye <olivier.lahaye@cea.fr> 1.2.7-2
