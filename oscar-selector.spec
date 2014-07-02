@@ -93,7 +93,7 @@ Qt graphical user interface for OSCAR Selector.
 - Move the libraries into a noarch directory.
 * Fri Nov 28 2008 Geoffroy Vallee <valleegr@ornl.gov> 1.0-3
 - Disable automatic dependencies.
-* Wed Nov 11 2008 Geoffroy Vallee <valleegr@ornl.gov> 1.0-2
+* Tue Nov 11 2008 Geoffroy Vallee <valleegr@ornl.gov> 1.0-2
 - clean up the spec file.
 * Thu Sep 11 2008 Geoffroy Vallee <valleegr@ornl.gov> 1.0-1
 - new upstream version (see ChangeLog for more details).
