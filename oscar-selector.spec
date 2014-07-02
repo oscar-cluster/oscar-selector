@@ -4,7 +4,7 @@
 Summary:        OSCAR Package Selector.
 Name:           oscar-selector
 Version:        1.2.7
-Release:        4
+Release:        4%{?dist}
 Vendor:         Open Cluster Group <http://OSCAR.OpenClusterGroup.org/>
 Distribution:   OSCAR
 Packager:       Geoffroy Vallee <valleegr@ornl.gov>
