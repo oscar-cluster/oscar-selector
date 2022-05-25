@@ -7,13 +7,13 @@ Standards-Version: 3.7.2
 
 Package: oscar-selector
 Architecture: all
-Depends: ${shlibs:Depends}, ${misc:Depends}, liboscar, orm
+Depends: ${misc:Depends}, liboscar, orm
 Description: OSCAR Selector
  Set of scripts and Perl modules for the selection of OSCAR packages that have
  to be installed on a OSCAR cluster.
 
 Package: oscar-selector-x11
 Architecture: all
-Depends: ${shlibs:Depends}, ${misc:Depends}, oscar-selector, libqt-perl | libqtgui4-perl
+Depends: ${misc:Depends}, oscar-selector, libqt-perl | libqtgui4-perl
 Description: OSCAR Selector Graphical Interface
  Graphical interface for OSCAR Selector.
