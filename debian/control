@@ -1,5 +1,5 @@
 Source: oscar-selector
-Section: oscar
+Section: science
 Priority: optional
 Maintainer: Olivier Lahaye <olivier.lahaye@cea.fr>
 Build-Depends: debhelper (>= 4.0.0)
@@ -7,7 +7,7 @@ Standards-Version: 3.7.2
 
 Package: oscar-selector
 Architecture: all
-Depends: ${misc:Depends}, liboscar, orm
+Depends: ${misc:Depends}, liboscar-server, orm
 Description: OSCAR Selector
  Set of scripts and Perl modules for the selection of OSCAR packages that have
  to be installed on a OSCAR cluster.
