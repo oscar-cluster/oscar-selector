@@ -4,7 +4,7 @@
 Summary:        OSCAR Package Selector.
 Name:           oscar-selector
 Version:        1.2.7
-Release:        4%{?dist}
+Release:        5%{?dist}
 Vendor:         Open Cluster Group <http://OSCAR.OpenClusterGroup.org/>
 Distribution:   OSCAR
 Packager:       Geoffroy Vallee <valleegr@ornl.gov>
@@ -12,7 +12,7 @@ License:        GPL
 Group:          Applications/System
 Source:         %{name}.tar.gz
 BuildArch:      noarch
-Requires:	oscar-base-lib
+Requires:	liboscar-server >= 6.3
 Requires:	orm
 BuildRequires:	perl
 #BuildRequires:	dblatex, sgmltools-lite
@@ -52,6 +52,8 @@ Qt graphical user interface for OSCAR Selector.
 
 
 %changelog
+* Mon Jun 13 2022 Olivier Lahaye <olivier.lahaye@cea.fr> 1.2.7-5
+- adapt deps to new oscar package
 * Sat Dec 14 2013 Olivier Lahaye <olivier.lahaye@cea.fr> 1.2.7-4
 - excluded SelectorTableItem.pm SelectorCheckTableItem.pm (unused Qt3 stuffs)
 * Sat Dec 14 2013 Olivier Lahaye <olivier.lahaye@cea.fr> 1.2.7-3
