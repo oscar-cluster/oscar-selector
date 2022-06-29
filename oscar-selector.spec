@@ -18,7 +18,7 @@ Requires:	orm
 
 BuildRoot:      %{_localstatedir}/tmp/%{name}-root
 
-%package x11
+%package gui
 Summary:        OSCAR Package Selector Qt GUI
 Group:          Applications/System
 Requires:       perl-GUIDeFATE-Tk
@@ -27,7 +27,7 @@ Requires:	oscar-selector
 %description
 Set of scripts and Perl modules for the selection of OSCAR package in order to set the software configuration of an OSCAR cluster.
 
-%description x11
+%description gui
 X11 graphical user interface for OSCAR Selector.
 
 %prep
@@ -43,7 +43,7 @@ X11 graphical user interface for OSCAR Selector.
 %{perl_vendorlib}/OSCAR/*
 %{_mandir}/*
 
-%files x11
+%files gui
 %defattr(-,root,root)
 %{_bindir}/oscar-selector-gui
 %exclude %{perl_vendorlib}/Qt/SelectorTableItem.pm

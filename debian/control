@@ -12,7 +12,7 @@ Description: OSCAR Selector
  Set of scripts and Perl modules for the selection of OSCAR packages that have
  to be installed on a OSCAR cluster.
 
-Package: oscar-selector-x11
+Package: oscar-selector-gui
 Architecture: all
 Depends: ${misc:Depends}, oscar-selector, guidefate-tk-perl
 Description: OSCAR Selector Graphical Interface

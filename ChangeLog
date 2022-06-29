@@ -1,5 +1,6 @@
 2.0 (not yet released);
 - Full new GUI version using GUIDeFATE generic toolkit.
+- oscar-selector-x11 package renamed to oscar-selector-gui.
 
 1.2.7:
 - SelectorCommon.pm: Fix "error Using a hash as a reference is deprecated"
