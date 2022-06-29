@@ -4,11 +4,12 @@ TOPDIR=..
 include $(TOPDIR)/Config.mk
 
 SCRIPTS := oscar-selector oscar-selector-gui
+POD_FILES := oscar-selector
 SUBDIRS :=
 
 man:
 	install -d -m 0755 $(DESTDIR)$(MANDIR)/man1/
-	for bin in ${SCRIPTS} ; do ( pod2man --section=1 $$bin $(DESTDIR)$(MANDIR)/man1/$$bin.1 ) ; done
+	for bin in ${POD_FILES} ; do ( pod2man --section=1 $$bin $(DESTDIR)$(MANDIR)/man1/$$bin.1 ) ; done
 
 all:
 	for dir in ${SUBDIRS} ; do ( cd $$dir ; ${MAKE} all ) ; done
