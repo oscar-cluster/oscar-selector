@@ -14,6 +14,6 @@ Description: OSCAR Selector
 
 Package: oscar-selector-gui
 Architecture: all
-Depends: ${misc:Depends}, oscar-selector, guidefate-tk-perl
+Depends: ${misc:Depends}, oscar-selector (>= 2.0), guidefate-tk-perl
 Description: OSCAR Selector Graphical Interface
  Graphical interface for OSCAR Selector.

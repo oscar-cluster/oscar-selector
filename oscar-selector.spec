@@ -22,7 +22,7 @@ BuildRoot:      %{_localstatedir}/tmp/%{name}-root
 Summary:        OSCAR Package Selector Qt GUI
 Group:          Applications/System
 Requires:       perl-GUIDeFATE-tk
-Requires:	oscar-selector
+Requires:	oscar-selector = %{name}-%{version}
 
 %description
 Set of scripts and Perl modules for the selection of OSCAR package in order to set the software configuration of an OSCAR cluster.
