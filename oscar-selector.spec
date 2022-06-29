@@ -21,7 +21,7 @@ BuildRoot:      %{_localstatedir}/tmp/%{name}-root
 %package gui
 Summary:        OSCAR Package Selector Qt GUI
 Group:          Applications/System
-Requires:       perl-GUIDeFATE-Tk
+Requires:       perl-GUIDeFATE-tk
 Requires:	oscar-selector
 
 %description
