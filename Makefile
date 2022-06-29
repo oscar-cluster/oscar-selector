@@ -24,14 +24,12 @@ clean:
 	for dir in ${GUI_SUBDIRS} ; do ( cd $$dir ; ${MAKE} clean ) ; done
 
 dist: clean
-	@rm -rf /tmp/$(PKG)
-	@mkdir -p /tmp/$(PKG)
-	@cp -rf * /tmp/$(PKG)
-	@cd /tmp/$(PKG); rm -rf `find . -name ".svn"`
-	@cd /tmp; tar czf $(PKG).tar.gz $(PKG)
-	@cp -f /tmp/$(PKG).tar.gz .
-	@rm -rf /tmp/$(PKG)/
-	@rm -f /tmp/$(PKG).tar.gz
+	@rm -rf ./tmp/$(PKG)
+	@mkdir -p ./tmp/$(PKG)
+	tar --exclude=tmp --exclude=.git -cvf - . | (cd ./tmp/$(PKG) && tar xvf -)
+	@cd ./tmp; tar czf $(PKG).tar.gz $(PKG)
+	@mv -f ./tmp/$(PKG).tar.gz .
+	@rm -rf ./tmp/$(PKG)/
 
 rpm: dist
 	cp $(PKG).tar.gz `rpm --eval '%_sourcedir'`
