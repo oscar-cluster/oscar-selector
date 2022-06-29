@@ -3,7 +3,7 @@ DESTDIR=
 TOPDIR=..
 include $(TOPDIR)/Config.mk
 
-SCRIPTS := oscar-selector 
+SCRIPTS := oscar-selector oscar-selector-gui
 SUBDIRS :=
 
 man:

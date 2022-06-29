@@ -1,20 +1,19 @@
-%define version     1.2.7
+%define version     2.0
 %define release     3
 
 Summary:        OSCAR Package Selector.
 Name:           oscar-selector
-Version:        1.2.7
-Release:        5%{?dist}
+Version:        %version
+Release:        1%{?dist}
 Vendor:         Open Cluster Group <http://OSCAR.OpenClusterGroup.org/>
 Distribution:   OSCAR
-Packager:       Geoffroy Vallee <valleegr@ornl.gov>
+Packager:       DAOlivier Lahaye <olivier.lahaye@cea.fr>
 License:        GPL
 Group:          Applications/System
 Source:         %{name}.tar.gz
 BuildArch:      noarch
 Requires:	liboscar-server >= 6.3
 Requires:	orm
-BuildRequires:	perl
 #BuildRequires:	dblatex, sgmltools-lite
 
 BuildRoot:      %{_localstatedir}/tmp/%{name}-root
@@ -22,36 +21,38 @@ BuildRoot:      %{_localstatedir}/tmp/%{name}-root
 %package x11
 Summary:        OSCAR Package Selector Qt GUI
 Group:          Applications/System
-Requires:       perl-Qt
+Requires:       perl-GUIDeFATE-Tk
 Requires:	oscar-selector
 
 %description
 Set of scripts and Perl modules for the selection of OSCAR package in order to set the software configuration of an OSCAR cluster.
 
 %description x11
-Qt graphical user interface for OSCAR Selector.
+X11 graphical user interface for OSCAR Selector.
 
 %prep
 %setup -n %{name}
 
 %install
-%__make install-cli DESTDIR=$RPM_BUILD_ROOT
-%__make install-gui DESTDIR=$RPM_BUILD_ROOT
+%__make install DESTDIR=$RPM_BUILD_ROOT
 
 %files
 %defattr(-,root,root)
 %{_bindir}/*
+%exclude %{_bindir}/oscar-selector-gui
 %{perl_vendorlib}/OSCAR/*
 %{_mandir}/*
 
 %files x11
 %defattr(-,root,root)
-%{perl_vendorlib}/Qt/*
+%{_bindir}/oscar-selector-gui
 %exclude %{perl_vendorlib}/Qt/SelectorTableItem.pm
 %exclude %{perl_vendorlib}/Qt/SelectorCheckTableItem.pm
 
 
 %changelog
+* Wed Jun 29 2022 Olivier Lahaye <olivier.lahaye@cea.fr> 2.0-1
+- New version
 * Mon Jun 13 2022 Olivier Lahaye <olivier.lahaye@cea.fr> 1.2.7-5
 - adapt deps to new oscar package
 * Sat Dec 14 2013 Olivier Lahaye <olivier.lahaye@cea.fr> 1.2.7-4

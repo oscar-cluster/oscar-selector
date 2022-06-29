@@ -1,4 +1,7 @@
-1.2.7 (not yet released):
+2.0 (not yet released);
+- Full new GUI version using GUIDeFATE generic toolkit.
+
+1.2.7:
 - SelectorCommon.pm: Fix "error Using a hash as a reference is deprecated"
 - SelectorAbout.pm: Use Firefox instead of Mozilla.
 - oscar-selector.spec: Added BuildRequires.

@@ -1,0 +1,209 @@
+#!/usr/bin/env perl 
+#OSCAR PACKAGE MANAGER
+#using  GUIDeFATE 
+
+use strict;
+use warnings;
+use XML::LibXML;
+use GUIDeFATE;
+use OSCAR::ODA_Defs;
+use OSCAR::Opkg;
+use OSCAR::PackagePath;
+use OSCAR::PackageSet;
+use OSCAR::RepositoryManager;
+use OSCAR::Utils;
+
+# set this to the paths of the packages and the package_sets
+my $packagesPath='/usr/lib/oscar/packages/';
+my $packageSetPath='/usr/share/oscar/package_sets/';
+
+my %packages=();                            # store package data;
+my %selection_data = {};
+my $packageSetNames=availablePackageSets();
+my $currentPackageSet="Default";            # the default pacakage set at start
+
+our $frame;
+our $gui;
+
+# we currently assume we deal only with the local distro
+my $distro = OSCAR::PackagePath::get_distro();
+my $compat_distro = OSCAR::PackagePath::get_compat_distro ($distro);
+
+# Get the list of opkg available thru package manager.
+my @oscar_repos = OSCAR::PackagePath::get_default_oscar_repo ($distro);
+my @available_opkgs;
+foreach my $repo (@oscar_repos) {
+    require OSCAR::ORM;
+    my @pkgs = OSCAR::ORM::get_available_opkgs($repo);
+    foreach my $opkg (@pkgs) {
+        if ( ! grep( /^$opkg$/, @available_opkgs ) ) {
+            push (@available_opkgs, $opkg);
+        }
+    }
+}
+
+# We get the list of core packages, useful information to deal with
+# selection
+my @core_opkgs = OSCAR::Opkg::get_list_core_opkgs();
+
+#allPackages();                              # get all the pacakages available to OSCAR
+#getDistroPackages();                        # get all package preselected pacakages for each distr
+
+startApp();                                 # start the application
+
+sub startApp{
+
+    # Get a list of all the packages in the package set
+    my @available_opkgs = OSCAR::PackageSet::get_list_opkgs_in_package_set($currentPackageSet, $compat_distro);
+
+    # Get selection status from OSCAR database
+    %selection_data = OSCAR::Database::get_opkgs_selection_data (@available_opkgs);
+
+    #getDistroPackages();                           # get all package preselected pacakages for each distr	
+    #my $optStr=join(",",map {$_."\t(".$packages{$_}{class}.")\t".$packages{$_}{version}}(sort keys %packages));
+    my $optStr = join(",",@available_opkgs);
+my $window=<<END;
++----------------------------+
+|T OSCAR Package Selector    |
++----------------------------+
+|   OSCAR Package Selector   |
+|                            |
+|   PackageSet  ^pkgSet^     |
+|                            |
+|   +C-------------------+   |
+|   |checklistitems      |   |
+|   |                    |   |
+|   |                    |   |
+|   +--------------------+   |
+|                            |
+|  {Save}            {Quit}  |
+|  [                      ]  |
++----------------------------+
+
+checklistitems=$optStr
+pkgSet=$currentPackageSet,$packageSetNames
+END
+	
+	$gui=GUIDeFATE->new($window,"tk","q");
+	$frame=$gui->getFrame()||$gui;
+	
+	my $t=0;
+	# Tooltips added before the gui started
+	foreach my $opkg (@available_opkgs) {
+		# Add package description as hoover tooltip.
+		$frame->tooltip("checklist4-$t","TODO: read pkg desc for ".$opkg);
+		# Sed Default selection if missing from ODA: selected if core otherwise: unselected.
+		if (!defined ($selection_data{$opkg})) {
+			if (OSCAR::Utils::is_element_in_array ($opkg, @core_opkgs)) {
+				$selection_data{$opkg} = OSCAR::ODA_Defs::SELECTED();
+			} else {
+				$selection_data{$opkg} = OSCAR::ODA_Defs::UNSELECTED();
+			}
+		}
+		# Select item according to selection_data.
+		$frame->setValue("checklist4-$t",($selection_data{$opkg} == OSCAR::ODA_Defs::SELECTED())?1:0);
+		$t++;
+	}
+	$gui->MainLoop();
+}
+
+#
+sub checklist4{
+	my ($item, $clicked, $opkg)=@_;
+	$opkg=~s/\t.+$//; # remove everything after package name
+
+	# Record user action in volatile ram.
+	$selection_data{$opkg}=($clicked == 1)?OSCAR::ODA_Defs::SELECTED():OSCAR::ODA_Defs::UNSELECTED() ;
+
+	# Update status line.
+	my $status = ($clicked == 1)?"enabled":"disabled";
+	$frame->setValue("textctrl7","package $opkg $status");
+}
+
+# Choose Experimetal or Default
+sub combo1{
+	$frame->setValue("textctrl7","Option $_[1] selected");
+	$currentPackageSet=$frame->getValue("combo1");
+	$gui->quit();
+	startApp();
+}
+
+#save the sate...
+sub btn5{
+	if (OSCAR::Database::set_opkgs_selection_data (%selection_data)) {
+		$frame->setValue("textctrl7","ERROR: Impossible to update selection data in ODA");
+	} else {
+		$frame->setValue("textctrl7","Selection saved in OSCAR database.");	
+	}
+}
+
+# leave the application
+sub btn6{
+	$frame->setValue("textctrl7","Quit");
+	# TODO: Ask to save if not saved.
+	$gui->quit();
+}
+
+####################################### End GUI ###############################
+
+# Get available Package Sets from disk.
+sub availablePackageSets {
+	my @availablePackageSets = ();
+	opendir(my $DIR, $packageSetPath);
+	while ( my $found = readdir $DIR ) {
+		next unless -d $packageSetPath . '/' . $found;
+		next if $found eq '.' or $found eq '..';
+		push @availablePackageSets, $found;
+		print "Found Package Set: $found\n";
+	}	
+	closedir $DIR;
+	return join(',',@availablePackageSets);
+}
+
+# set up all packages available extract data and put into %packages
+sub allPackages{
+	my @packageConfigs= map {-e "$_/config.xml"?"$_/config.xml":()} <$packagesPath*>; # extract all directories in this path
+	foreach my $conf (@packageConfigs){
+		my $config = XML::LibXML->load_xml(location => $conf);
+		my $name=$config->findvalue('/oscar/name');
+		foreach my $k (qw/class description summary group description/){
+			$packages{$name}{$k}=$config->findvalue("/oscar/$k");
+		}
+		($packages{$name}{version}=($config->findnodes('/oscar/changelog/versionEntry/@version'))[0])=~s/\"//g;
+	}
+}
+# get distro specific package_set
+sub getDistroPackages{
+	foreach my $psXML(<"$packageSetPath$currentPackageSet/*">){
+		next unless ($psXML=~/[\/\\]([a-z_\-\d]+)\.xml$/);
+		my $ps=$1;
+#		$distros{$ps}={XML=>$psXML};
+		my $packSet = XML::LibXML->load_xml(location => $psXML);
+#		$distros{$ps}{packages}=[map{$_->textContent()} $packSet->findnodes('/package_set/packages/opkg')];
+	}
+}
+
+#sub packageSetHasPackage{
+#	my $pkg=shift;
+#	return grep (/^$pkg$/,@{$distros{$currentDistro}{packages}});
+#}
+
+
+sub savePackageSet{
+	my $packageSet="";
+	my $index=0;
+	foreach (sort keys %packages){
+    $packageSet.="        <opkg>$_</opkg>\n" if($frame->getValue("checklist4-$index"));
+		$index++;
+	}
+my $xml=<<EndXML;
+<?xml version="1.0" encoding="ISO-8859-1"?>
+<package_set>
+    <name>Default</name>
+    <packages>
+$packageSet    </packages>
+</package_set>
+EndXML
+    #just print to STDOUT for now...can be saved
+	print $xml
+}
