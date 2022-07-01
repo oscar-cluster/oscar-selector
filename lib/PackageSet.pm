@@ -36,7 +36,9 @@ use base qw(Exporter);
 use OSCAR::OCA::OS_Detect;
 use OSCAR::FileUtils;
 use OSCAR::Logger;
+use OSCAR::LoggerDefs;
 use OSCAR::Utils;
+use OSCAR::Env;
 use XML::Simple;
 use Data::Dumper;
 use Carp;
@@ -52,7 +54,7 @@ use Carp;
             rename_package_set
             );
 
-my $verbose = $ENV{OSCAR_VERBOSE};
+my $verbose = $OSCAR::Env::oscar_verbose;
 use vars qw ($package_set_dir);
 if (defined $ENV{OSCAR_HOME}) {
     $package_set_dir = $ENV{OSCAR_HOME}."/share/package_sets";
@@ -73,8 +75,7 @@ sub duplicate_package_set ($$$) {
     my $dest_dir = "$package_set_dir/$new_ps";
     my $dest = "$package_set_dir/$new_ps/$distro.xml";
     if (-f $dest) {
-        OSCAR::Logger::oscar_log_subsection "File $dest already exists, doing ".
-            "nothing";
+        oscar_log(1, WARNING, "File $dest already exists, doing nothing");
         return 0;
     }
 
@@ -146,7 +147,7 @@ sub get_local_package_set_list {
         if ($dir eq "." or $dir eq ".." or $dir eq "Default") {
             next;
         } else {
-            print "Analyzing package set \"$dir\"\n" if $verbose;
+            oscar_log(5, INFO, "Analyzing package set \"$dir\"");
             my $os = OSCAR::OCA::OS_Detect::open();
             # When we find a package set, we check if a package set is really
             # defined for the local distro. Note that the list of supported OPKG
@@ -157,7 +158,7 @@ sub get_local_package_set_list {
             my $distro_id = $os->{compat_distro}."-".$os->{compat_distrover}."-" .
                             $os->{arch} . ".xml";
             if ( -f "$package_set_dir/$dir/$distro_id") {
-                print "Package set found: $dir\n" if $verbose;
+                oscar_log(5, INFO, "Package set found: $dir");
                 push (@packageSets, $dir);
             }
         }
@@ -195,19 +196,17 @@ sub get_list_opkgs_in_package_set ($$) {
     my $xml_data = $simple->XMLin($file_path);
     my $base = $xml_data->{packages}->[0]->{opkg};
     return undef if (!defined $base);
-    print Dumper($xml_data) if $verbose;
-    print "Number of OPKG in the $packageSetName package set: ".
-          scalar(@{$base})."\n" if $verbose;
+    oscar_log(10, INFO, Dumper($xml_data));
+    oscar_log(5,  INFO, "Number of OPKG in the $packageSetName package set: ".
+          scalar(@{$base})."\n");
     for (my $i=0; $i < scalar(@{$base}); $i++) {
         my $opkg_name = $xml_data->{packages}->[0]->{opkg}->[$i];
         next if (!OSCAR::Utils::is_a_valid_string ($opkg_name));
         push (@opkgs, $opkg_name) 
     }
 
-    if ($verbose) {
-        print "List of available OPKGs: ";
-        OSCAR::Utils::print_array (@opkgs);
-    }
+    oscar_log(5, INFO, "Available OPKGs in $packageSetName package set:");
+    oscar_log(5, INFO, join(", ", @opkgs));
     close (FILE);
 
     return @opkgs;
@@ -299,8 +298,8 @@ sub get_opkgs_path_from_package_set ($) {
         }
     }
 
-    print "List of available OPKGs: ";
-    print_array (@opkgs);
+    oscar_log(5, INFO, "Available OPKGs in $packageSetName package set: ");
+    oscar_log(5, INFO, join( ", ", @opkgs));
     return @opkgs;
 }
 
@@ -327,8 +326,7 @@ sub new_package_set ($$) {
 
     my $file = "$package_set_dir/$set/$distro.xml";
     if (-f $file) {
-        OSCAR::Logger::oscar_log_subsection "Package set already exist ($set, ".
-            "distro";
+        oscar_log(1, WARNING, "Package set already exist ($set, distro)");
         return 0;
     }
 
